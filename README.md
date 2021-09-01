@@ -88,3 +88,9 @@ exceptions and unimplemented system calls result in a panic().
 
 Sets up the ELF execution environment and directly jumps to the application
 entry address.
+
+## License
+
+SPDX-License-Identifier: BSD-3-Clause
+
+See [LICENSE](LICENSE) for the full license text.

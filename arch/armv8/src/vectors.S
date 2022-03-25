@@ -13,7 +13,7 @@
 #define ESR_ISS_SVC_IMM16_MASK (0xffff)
 
 function handle_el1h_sync
-	save_runtime_context_sync
+	save_runtime_context_syscall
 	// Check if it's svc #0
 	mrs	x9, ESR_EL1
 	lsr	x10, x9, #ESR_EC_SHIFT
@@ -30,12 +30,14 @@ function handle_el1h_sync
 	cbz	x12, LOCAL(svc_not_implemented)
 	blr	x12
 local svc_return:
-	restore_runtime_context_sync
+	restore_runtime_context_syscall
 	eret
 local svc_not_implemented:
 	mov	x0, #-ENOSYS
 	b	LOCAL(svc_return)
 local el1h_invalid:
+	restore_runtime_context_syscall
+
 	save_runtime_context_full
 	mov	x0, sp
 	bl	dump_trap_frame

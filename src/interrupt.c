@@ -11,7 +11,6 @@
 
 #include <errno.h>
 #include <fs.h>
-#include <guest_types.h>
 #include <interrupt.h>
 #include <platform_irq.h>
 
@@ -25,11 +24,9 @@ struct isr_entry {
 static struct isr_entry isr_table[PLATFORM_NUM_IRQS];
 
 void
-interrupt_init(uintptr_t dtb)
+interrupt_init(void)
 {
-	boot_env_data_t *env_data = (boot_env_data_t *)dtb;
-
-	platform_irq_init(env_data->gicd_base, env_data->gicr_base);
+	platform_irq_init();
 }
 
 static bool

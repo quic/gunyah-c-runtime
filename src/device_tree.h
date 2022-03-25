@@ -10,4 +10,4 @@ typedef struct {
 } device_tree_info_t;
 
 device_tree_info_t
-parse_device_tree(uintptr_t dtb);
+parse_device_tree(void);

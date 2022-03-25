@@ -13,6 +13,7 @@
 #include <compiler.h>
 #include <cpulocal.h>
 #include <errno.h>
+#include <guest_types.h>
 #include <interrupt.h>
 #include <platform_timer.h>
 #include <timer.h>
@@ -20,10 +21,11 @@
 #define NS_PER_S 1000000000
 
 #define TIMESPEC_MAX_NSEC (NS_PER_S - 1)
-#define TIMESPEC_MAX_SEC                                                       \
-	(long)((UINT64_MAX - TIMESPEC_MAX_NSEC) / PLATFORM_TIMER_FREQ)
 
-static_assert(TIMESPEC_MAX_SEC > 0, "Invalid max timespec");
+extern boot_env_data_t *env_data;
+
+static uint64_t timer_freq;
+static long	timespec_max_sec;
 
 CPULOCAL_DECLARE_STATIC(bool, timer_fired);
 
@@ -42,7 +44,13 @@ timer_isr(int irq, void *data)
 void
 timer_init(void)
 {
-	platform_timer_init();
+	timer_freq = env_data->timer_freq;
+	timespec_max_sec =
+		(long)((UINT64_MAX - TIMESPEC_MAX_NSEC) / timer_freq);
+
+	assert(timespec_max_sec > 0U);
+
+	platform_timer_init(timer_freq);
 	interrupt_register_isr(PLATFORM_TIMER_IRQ, &timer_isr, NULL);
 }
 
@@ -50,25 +58,26 @@ static bool
 timespec_valid(const struct timespec *ts)
 {
 	return (ts->tv_sec >= 0) && (ts->tv_nsec >= 0) &&
-	       (ts->tv_sec <= TIMESPEC_MAX_SEC) &&
+	       (ts->tv_sec <= timespec_max_sec) &&
 	       (ts->tv_nsec <= TIMESPEC_MAX_NSEC);
 }
 
 static uint64_t
 timespec_to_ticks(const struct timespec *ts)
 {
-	return (uint64_t)((ts->tv_sec * PLATFORM_TIMER_FREQ) +
-			  ((ts->tv_nsec * PLATFORM_TIMER_FREQ) / NS_PER_S));
+	return (uint64_t)((ts->tv_sec * (long)timer_freq) +
+			  ((ts->tv_nsec * (long)timer_freq) / NS_PER_S));
 }
 
-static void
+extern void
+ticks_to_timespec(uint64_t ticks, struct timespec *ts);
+void
 ticks_to_timespec(uint64_t ticks, struct timespec *ts)
 {
 	assert(ts != NULL);
 
-	ts->tv_sec  = ticks / PLATFORM_TIMER_FREQ;
-	ts->tv_nsec = ((ticks % PLATFORM_TIMER_FREQ) * NS_PER_S) /
-		      PLATFORM_TIMER_FREQ;
+	ts->tv_sec  = (long)(ticks / timer_freq);
+	ts->tv_nsec = (long)(((ticks % timer_freq) * NS_PER_S) / timer_freq);
 
 	assert(timespec_valid(ts));
 }

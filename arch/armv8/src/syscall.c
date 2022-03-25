@@ -14,6 +14,9 @@
 
 #define SYSCALL(x, y) [SYS_##x] = (sys_call_ptr_t)sys_##y
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcast-function-type"
+
 sys_call_ptr_t aarch64_sys_call_table[NR_syscall_max + 1] = {
 	SYSCALL(openat, openat),
 	SYSCALL(ppoll, ppoll),
@@ -27,3 +30,5 @@ sys_call_ptr_t aarch64_sys_call_table[NR_syscall_max + 1] = {
 	SYSCALL(tkill, tkill),
 	SYSCALL(close, close),
 };
+
+#pragma clang diagnostic pop

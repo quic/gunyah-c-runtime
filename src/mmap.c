@@ -16,31 +16,34 @@
 
 #include "mmap.h"
 
-static uintptr_t g_heap_bottom;
-static size_t	 g_heap_size;
-static uintptr_t g_cur_heap;
+static uintptr_t heap_bottom;
+static size_t	 heap_size;
+static uintptr_t cur_brk;
 
 void
-init_heap(uintptr_t heap_bottom, size_t size)
+init_heap(uintptr_t base, size_t size)
 {
 	// heap bottom should be PAGE aligned, musl aligns it if it's not.
-	assert(util_is_baligned(heap_bottom, PAGE_SIZE));
+	assert(util_is_baligned(base, PAGE_SIZE));
+	assert(util_is_baligned(size, PAGE_SIZE));
 
-	g_heap_bottom = heap_bottom;
-	g_cur_heap    = g_heap_bottom;
-	g_heap_size   = size;
+	heap_bottom = base;
+	cur_brk	    = base;
+	heap_size   = size;
 }
 
 asmlinkage long
 sys_brk(unsigned long brk)
 {
-	if ((brk < g_heap_bottom + g_heap_size) && (brk >= g_heap_bottom)) {
-		g_cur_heap = util_balign_up(brk, PAGE_SIZE);
+	uintptr_t new_brk = util_balign_up(brk, PAGE_SIZE);
+
+	if ((new_brk >= heap_bottom) && (new_brk <= heap_bottom + heap_size)) {
+		cur_brk = new_brk;
 	} else if (brk != 0UL) {
 		// It's just query the heap top with brk == 0
 		LOG(ERROR, MSG, "{:s}: invalid brk {:#x}\n",
 		    (register_t) __func__, brk);
 	}
 
-	return (long)g_cur_heap;
+	return (long)cur_brk;
 }

@@ -11,6 +11,7 @@
 #include <atomic.h>
 #include <cpulocal.h>
 #include <device.h>
+#include <guest_types.h>
 #include <interrupt.h>
 #include <platform_irq.h>
 #include <util.h>
@@ -21,18 +22,20 @@
 // Set to 0 to use GICD_I[SC]PENDR writes; 1 to use SETSPI / CLRSPI
 #define PLATFORM_IRQ_USE_MSI 0
 
+extern boot_env_data_t *env_data;
+
 struct gicd {
 	uint32_t _Atomic ctlr;
 	uint32_t _Atomic typer;
 	uint32_t _Atomic iidr;
-	uint8_t pad_to_statusr_[4];
+	uint8_t		 pad_to_statusr_[4];
 	uint32_t _Atomic statusr;
-	uint8_t pad_to_setspi_nsr_[44];
+	uint8_t		 pad_to_setspi_nsr_[44];
 	uint32_t _Atomic setspi_nsr;
-	uint8_t pad_to_clrspi_nsr_[4];
+	uint8_t		 pad_to_clrspi_nsr_[4];
 	uint32_t _Atomic clrspi_nsr;
 	// ignore {set,clr}spi_sr which are WI when DS=1
-	uint8_t pad_to_igroupr_[52];
+	uint8_t		 pad_to_igroupr_[52];
 	uint32_t _Atomic igroupr[32];
 	uint32_t _Atomic isenabler[32];
 	uint32_t _Atomic icenabler[32];
@@ -40,14 +43,14 @@ struct gicd {
 	uint32_t _Atomic icpendr[32];
 	uint32_t _Atomic isactiver[32];
 	uint32_t _Atomic icactiver[32];
-	uint8_t _Atomic ipriorityr[1020];
+	uint8_t _Atomic	 ipriorityr[1020];
 	// Ignore itargetsr
-	uint8_t pad_to_icfgr_[1028];
+	uint8_t		 pad_to_icfgr_[1028];
 	uint32_t _Atomic icfgr[64];
 	uint32_t _Atomic igrpmodr[32];
 	// Ignore nascr, sgir,
 	// {c,s}pendsgir, extended regs
-	uint8_t pad_to_irouter_[21376];
+	uint8_t		 pad_to_irouter_[21376];
 	uint64_t _Atomic irouter[988];
 	// Ignore extended irouter
 	uint8_t pad_to_end_[32800];
@@ -66,24 +69,24 @@ struct gicr {
 	uint8_t pad_to_igroupr0_[128];
 	// Extended regs are ignored
 	uint32_t _Atomic igroupr0;
-	uint8_t pad_to_isenabler0_[124];
+	uint8_t		 pad_to_isenabler0_[124];
 	uint32_t _Atomic isenabler0;
-	uint8_t pad_to_icenabler0_[124];
+	uint8_t		 pad_to_icenabler0_[124];
 	uint32_t _Atomic icenabler0;
-	uint8_t pad_to_ispendr0_[124];
+	uint8_t		 pad_to_ispendr0_[124];
 	uint32_t _Atomic ispendr0;
-	uint8_t pad_to_icpendr0_[124];
+	uint8_t		 pad_to_icpendr0_[124];
 	uint32_t _Atomic icpendr0;
-	uint8_t pad_to_isactiver0_[124];
+	uint8_t		 pad_to_isactiver0_[124];
 	uint32_t _Atomic isactiver0;
-	uint8_t pad_to_icactiver0_[124];
+	uint8_t		 pad_to_icactiver0_[124];
 	uint32_t _Atomic icactiver0;
-	uint8_t pad_to_ipriorityr_[124];
-	uint8_t _Atomic ipriorityr[32];
-	uint8_t pad_to_icfgr0_[2016];
+	uint8_t		 pad_to_ipriorityr_[124];
+	uint8_t _Atomic	 ipriorityr[32];
+	uint8_t		 pad_to_icfgr0_[2016];
 	uint32_t _Atomic icfgr0;
 	uint32_t _Atomic icfgr1;
-	uint8_t pad_to_igrpmodr0_[248];
+	uint8_t		 pad_to_igrpmodr0_[248];
 	uint32_t _Atomic igrpmodr0;
 	// Ignore nsacr
 	uint8_t pad_to_vlpi_base_[62204];
@@ -150,16 +153,17 @@ gicr_wait_for_write(struct gicr *gicr)
 }
 
 void
-platform_irq_init(uint64_t gicd_base, uint64_t gicr_base)
+platform_irq_init(void)
 {
 	count_t num_irqs = PLATFORM_NUM_IRQS;
 
 	// FIXME: map if using page table & not already mapped
-	gicd = (struct gicd *)gicd_base;
+	gicd = (struct gicd *)env_data->gicd_base;
 
 	// FIXME: do proper typer lookup
 	for (cpu_index_t i = 0U; cpulocal_index_valid(i); i++) {
-		CPULOCAL_BY_INDEX(gicr, i) = ((struct gicr *)gicr_base) + i;
+		CPULOCAL_BY_INDEX(gicr, i) =
+			((struct gicr *)env_data->gicr_base) + i;
 	}
 
 	// Disable distributor
@@ -413,6 +417,10 @@ platform_irq_acknowledge(void)
 
 	__asm__ volatile("mrs %[r], ICC_IAR1_EL1"
 			 : [r] "=r"(icc_iar1), "+m"(gic_ordering));
+
+	// Ensure IRQ is not handled before it is acknowledged in the GICD
+	// (as that could cause loss of edge-triggered IRQs, especially SGIs)
+	__asm__ volatile("isb; dsb sy" ::: "memory");
 
 	return (icc_iar1 < GIC_SPI_END) ? (int)icc_iar1 : -1;
 }

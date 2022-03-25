@@ -25,11 +25,11 @@ write_cntv_ctl(uint64_t cntv_ctl)
 }
 
 void
-platform_timer_init(void)
+platform_timer_init(uint64_t timer_freq)
 {
 	uint64_t cntfrq;
 	__asm__ volatile("mrs %[r], CNTFRQ_EL0" : [r] "=r"(cntfrq));
-	assert(cntfrq == PLATFORM_TIMER_FREQ);
+	assert(cntfrq == timer_freq);
 
 	uint64_t cntkctl = 0U;
 	__asm__ volatile("msr CNTKCTL_EL1, %[r]"

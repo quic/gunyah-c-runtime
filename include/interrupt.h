@@ -5,7 +5,7 @@
 #include <uapi/interrupt.h>
 
 void
-interrupt_init(uintptr_t dtb);
+interrupt_init(void);
 
 int
 interrupt_register_isr(int irq, isr_t isr, void *data);

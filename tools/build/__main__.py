@@ -16,10 +16,8 @@ import os
 import sys
 import logging
 import inspect
-import imp
 
-fp, path, desc = imp.find_module("config_file")
-cfg = imp.load_module('rt_cfg', fp, path, desc)
+from . import config_file as cfg
 
 
 #

@@ -8,29 +8,37 @@
 #define BOOT_STACK_SIZE (4096)
 #define CPACR_EL1_FPEN_MASK (0x3UL << 20)
 #define CPACR_EL1_FPEN_ENABLE_EL1_SIMD (0x1UL << 20)
+#define SCTLR_EL1_ENIA_MASK (0x1U << 31)
+
+#define SMCCC_FAST_CALL_SHIFT	31
+#define SMCCC_64BIT_CALL_SHIFT	30
+#define SMCCC_SERVICE_SHIFT	24
+#define SMCCC_FUNCTION_SHIFT	0
+
+#define SMCCC_SERVICE_ARM		0
+#define SMCCC_SERVICE_CPU		1
+#define SMCCC_SERVICE_SIP		2
+#define SMCCC_SERVICE_OEM		3
+#define SMCCC_SERVICE_STANDARD_SECURE	4
+#define SMCCC_SERVICE_STANDARD_HYP	5
+#define SMCCC_SERVICE_VENDOR_HYP	6
+
+#define SMC_VENDOR_HYP_GET_PRNG_DATA    9
+
+#define SMCCC_FUNCTION_ID(fast, call64, service, function)	\
+	((((fast) != 0) << SMCCC_FAST_CALL_SHIFT) |		\
+	(((call64) != 0) << SMCCC_64BIT_CALL_SHIFT) |	\
+	((service) << SMCCC_SERVICE_SHIFT) |			\
+	((function) << SMCCC_FUNCTION_SHIFT))
 
 	.section .text.boot
 function _start section=nosection
 	// Entry arguments:
-	// x0 = dtb address (currently not a DTB)
-
-	// FIXME: the following are temporary until added to environment
-	// x1 = application entry address
-	// x2 = runtime base address
-	// x3 = application memory base address (heap)
-	// x4 = application memory size
+	// x0 = boot_env_data
 
 	// Save the entry arguments
-	adr	x9, dtb_addr
+	adr	x9, env_data
 	str	x0, [x9]
-	adr	x9, app_addr
-	str	x1, [x9]
-	adr	x9, runtime_base
-	str	x2, [x9]
-	adr	x9, app_memory
-	str	x3, [x9]
-	adr	x9, app_memory_size
-	str	x4, [x9]
 
 	// enable floating point and SIMD register access
 	mrs	x0, CPACR_EL1
@@ -56,22 +64,42 @@ function _start section=nosection
 
 	// relocate ourself first before calling C
 	adrl	x0, _DYNAMIC
-	adr	x9, runtime_base
+	adr	x9, env_data
 	ldr	x1, [x9]
 	bl	rel_fixup
 
+        // Set up the PAuth IA key (the only one currently used) and enable
+        // PAuth, if the CPU supports it. Failure to obtain random data is
+	// not tolerated.
+	mrs	x0, ID_AA64ISAR1_EL1
+	tst	x0, 0xff0 // API and APA fields; both 0 means no PAC support
+        b.eq    LOCAL(pac_done)
+
+.arch armv8.3-a // LLVM doesn't understand .arch_extension pauth yet
+	abs64	x0, SMCCC_FUNCTION_ID(1, 1, SMCCC_SERVICE_VENDOR_HYP, \
+		SMC_VENDOR_HYP_GET_PRNG_DATA)
+	mov	x1, 16
+	smc	0
+	cbnz	x0, LOCAL(hang)
+
+	msr	APIAKeyLo_EL1, x1
+	msr	APIAKeyHi_EL1, x2
+
+	mrs	x0, SCTLR_EL1
+	orr	x0, x0, SCTLR_EL1_ENIA_MASK
+	msr	SCTLR_EL1, x0
+	isb
+.arch armv8.2-a
+local pac_done:
+
 	// Init runtime
-	adr	x9, dtb_addr
-	ldr	x0, [x9]
 	bl 	interrupt_init
 	bl	fs_init
 	bl	timer_init
 
-	adr	x9, app_addr
-	ldr	x0, [x9]
-	adr	x9, dtb_addr
-	ldr	x1, [x9]
 	// elf_setup returns application entry address
+	// returned x0 is app entry. It will blr to that entry after
+	// everything is done
 	bl	elf_setup
 
 	// setup application stack
@@ -107,22 +135,8 @@ aarch64_boot_stack_bottom:
 
 	.section ".data.elf_parameters", "aw"
 	.align 8
-dtb_addr:
-	.space 8
-app_addr:
-	.space 8
-app_entry:
-	.space 8
-runtime_base:
-	.space 8
-	.global app_memory
-app_memory:
-	.space 8
-	.global app_memory_size
-app_memory_size:
-	.space 8
-	.global app_heap
-app_heap:
+	.global env_data
+env_data:
 	.space 8
 	.global app_stack
 app_stack:

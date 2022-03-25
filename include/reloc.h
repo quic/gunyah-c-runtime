@@ -9,4 +9,4 @@
 #define DT_CNT 19
 
 void
-rel_fixup(Elf64_Dyn *dyni, Elf64_Addr base);
+rel_fixup(Elf64_Dyn *dyni, boot_env_data_t *env_data);

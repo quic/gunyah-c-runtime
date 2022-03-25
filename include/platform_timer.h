@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 void
-platform_timer_init(void);
+platform_timer_init(uint64_t platform_timer_freq);
 
 void
 platform_timer_set_timeout(uint64_t ticks);

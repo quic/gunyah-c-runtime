@@ -207,7 +207,7 @@ strlen(const char *str)
 ssize_t
 strscpy(char *dest, const char *str, size_t count)
 {
-	char *	    out	   = dest;
+	char	     *out	   = dest;
 	const char *pos	   = str;
 	size_t	    remain = count;
 	ssize_t	    ret;

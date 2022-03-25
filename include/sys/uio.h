@@ -3,6 +3,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 struct iovec {
-	void * iov_base;
+	void  *iov_base;
 	size_t iov_len;
 };

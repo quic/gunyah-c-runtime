@@ -36,9 +36,11 @@ dump_trap_frame(trap_frame_t *frame)
 	LOG(ERROR, PANIC, "x24:{:#8x}\t x25:{:#8x}\t x26:{:#8x}\t x27:{:#8x}\n",
 	    frame->x[24], frame->x[25], frame->x[26], frame->x[27]);
 	LOG(ERROR, PANIC, "x28:{:#8x}\t x29:{:#8x}\t x30:{:#8x}\n",
-	    frame->x[28], frame->x[29], frame->x[30]);
+	    frame->x[28], frame->x29, frame->x30);
 	LOG(ERROR, PANIC, "spsr_el1:{:#8x}\t elr_el1:{:#8x}\t esr_el1:{:#8x}\n",
 	    frame->spsr, frame->elr, frame->esr);
+	LOG(ERROR, PANIC, "sp_el0:{:#8x}\t sp_el1:{:#8x}\n", frame->sp_el0,
+	    frame->sp_el1);
 }
 
 noreturn void NOINLINE

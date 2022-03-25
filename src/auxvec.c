@@ -12,6 +12,7 @@
 #include <elf.h>
 
 #include <arch_def.h>
+#include <guest_types.h>
 #include <util.h>
 
 #include "device_tree.h"
@@ -21,11 +22,8 @@
 #define ELF_HWCAP (0x0)
 
 extern uintptr_t app_stack;
-extern uintptr_t app_heap;
 
-// provide by gunyah elf loader, for application stack and heap
-extern uintptr_t app_memory;
-extern size_t	 app_memory_size;
+extern boot_env_data_t *env_data;
 
 typedef uint64_t elf_addr_t;
 
@@ -34,7 +32,7 @@ static const char *app_name = "app";
 
 // return entry start address
 uintptr_t
-elf_setup(uint64_t app_address, uintptr_t dtb);
+elf_setup(void);
 
 // initial auxiliary vector table
 static uintptr_t
@@ -72,7 +70,7 @@ setup_auxvector(uint64_t **stack, uintptr_t app_addr)
 	uintptr_t   phdr_addr	 = ehdr->e_phoff + app_addr;
 	size_t	    ph_entry_cnt = ehdr->e_phnum;
 	uintptr_t   entry_addr	 = ehdr->e_entry + app_addr;
-	uint64_t *  p		 = *stack;
+	uint64_t	 *p		 = *stack;
 
 	p = fill_auxv_entry(p, AT_PAGESZ, PAGE_SIZE);
 
@@ -130,8 +128,12 @@ setup_arguments(uint64_t **stack, int argc, char **arg_values)
 #define STACK_SIZE (16 * 1024)
 
 uintptr_t
-elf_setup(uint64_t app_address, uintptr_t dtb)
+elf_setup()
 {
+	uint64_t  app_address	  = env_data->app_ipa;
+	size_t	  app_memory_size = env_data->app_heap_size;
+	uintptr_t app_memory	  = env_data->app_heap_ipa;
+
 	// Place the stack below the heap to avoid collisions
 	assert(app_memory_size > STACK_SIZE);
 	app_stack = app_memory + STACK_SIZE;
@@ -140,12 +142,12 @@ elf_setup(uint64_t app_address, uintptr_t dtb)
 	app_memory_size -= STACK_SIZE;
 
 	// calculate application stack and heap
-	app_heap = app_memory;
+	uintptr_t app_heap = app_memory;
 	init_heap(app_heap, app_memory_size);
 
 	// parse dtb to get commandline, arg count, env count, envs
 	device_tree_info_t device_tree_info;
-	device_tree_info = parse_device_tree(dtb);
+	device_tree_info = parse_device_tree();
 
 	uint64_t *stack = (uint64_t *)app_stack;
 
@@ -181,7 +183,7 @@ elf_setup(uint64_t app_address, uintptr_t dtb)
 			device_tree_info.argv);
 
 	// check stack is aligned to 16-bytes
-	assert((uintptr_t)stack == ((uintptr_t)stack & ~15U));
+	assert(util_is_baligned((uintptr_t)stack, 16U));
 
 	app_stack = (uintptr_t)stack;
 

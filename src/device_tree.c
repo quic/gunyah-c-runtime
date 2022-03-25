@@ -8,6 +8,8 @@
 #include <types.h>
 
 #include <arch_def.h>
+#include <guest_types.h>
+#include <log.h>
 
 #include "device_tree.h"
 
@@ -16,11 +18,12 @@ static char *argv[ARGC];
 #define ENVC 1
 static char *envp[ENVC] = { "rootvm" };
 
-extern struct log log_buf;
-extern size_t	  log_buf_size;
+extern boot_env_data_t *env_data;
+
+extern size_t early_log_buf_size;
 
 device_tree_info_t
-parse_device_tree(uintptr_t dtb)
+parse_device_tree()
 {
 	device_tree_info_t ret;
 
@@ -28,11 +31,11 @@ parse_device_tree(uintptr_t dtb)
 
 	// FIXME: For now we are getting the boot_env_data pointer instead of a
 	// dtb. Eventually we will get a real dtb that will need to be parsed.
-	argv[1] = (char *)dtb;
+	argv[1] = (char *)env_data;
 
 	// The address of the log buffer so RM can report it back to hypervisor
-	argv[2] = (char *)&log_buf;
-	argv[3] = (char *)log_buf_size;
+	argv[2] = (char *)log_buf;
+	argv[3] = (char *)early_log_buf_size;
 
 	ret.argv = argv;
 	ret.argc = ARGC;

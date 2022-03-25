@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 void
-platform_irq_init(uint64_t gicd_base, uint64_t gicr_base);
+platform_irq_init(void);
 
 void
 platform_irq_enable(int irq);

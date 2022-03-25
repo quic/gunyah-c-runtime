@@ -2,6 +2,9 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
+// FIXME: need to share certain definitions between musl and run time, should
+// we just copy from musl or there's another way.
+
 // FIXME: refine NR_syscall_max to maximum number (+1) of syscall
 
 #define NR_syscall_max 434

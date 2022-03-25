@@ -7,13 +7,16 @@
 #include <elf.h>
 
 #include <arch_reloc.h>
+#include <guest_types.h>
 #include <reloc.h>
 
 void
-rel_fixup(Elf64_Dyn *dyni, Elf64_Addr base)
+rel_fixup(Elf64_Dyn *dyni, boot_env_data_t *env_data)
 {
+	Elf64_Addr base = env_data->runtime_ipa;
+
 	Elf64_Addr  dyn[DT_CNT];
-	Elf64_Rel * rel	 = NULL;
+	Elf64_Rel  *rel	 = NULL;
 	Elf64_Rela *rela = NULL;
 	Elf64_Word  sz	 = 0;
 

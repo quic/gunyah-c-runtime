@@ -232,7 +232,7 @@ class Configuration:
                 "Please set $LLVM to the root of the prebuilt LLVM")
             sys.exit(1)
 
-        # Use a QC prebuilt LLVM
+        # Use a prebuilt LLVM
         self.graph.add_env('CLANG', os.path.join(llvm_root, 'bin', 'clang'))
 
         # FIXME: manually add the toolchain header file. Remove it.

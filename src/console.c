@@ -21,30 +21,13 @@ void
 console_write(const char *msg, size_t sz)
 {
 	if (console != NULL) {
-		size_t	    remain = sz;
-		const char *head   = msg;
-
-		do {
-			static bool eol = true;
-
-			if (eol && (prefix_len > 0)) {
+		if (msg == NULL) {
+			if (prefix_len > 0) {
 				console(prefix, (size_t)prefix_len);
-				eol = false;
 			}
-
-			char * next = memchr(head, '\n', remain);
-			size_t len;
-			if (next == NULL) {
-				len = remain;
-			} else {
-				len = (size_t)(next - head) + 1;
-				eol = true;
-			}
-			console(head, len);
-
-			remain -= len;
-			head = head + len;
-		} while (remain > 0U);
+		} else {
+			console(msg, sz);
+		}
 	}
 }
 

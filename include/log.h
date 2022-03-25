@@ -47,3 +47,7 @@ log_msg(uint64_t level, uint64_t action, const char *a1, size_t a2,
 
 extern void
 log_append(const char *msg, size_t sz);
+extern void
+log_set_buffer(uintptr_t new_addr, size_t area_sz);
+
+extern struct log *log_buf;

@@ -13,10 +13,17 @@
 #define _IOWR(a, b, c) _IOC(_IOC_READ | _IOC_WRITE, (a), (b), sizeof(c))
 
 #define TIOCGWINSZ 0x5413
+#define TIOCSETBUF 0x547f // Non-standard IOCTL!!
 
 struct winsize {
 	uint16_t ws_row;
 	uint16_t ws_col;
 	uint16_t ws_xpixel;
 	uint16_t ws_ypixel;
+};
+
+// Our non-standard buffer control message
+struct tty_set_buffer_req {
+	uintptr_t buffer;
+	size_t	  size;
 };

@@ -15,7 +15,7 @@
 
 #include "string_util.h"
 
-//  TODO: Add more failure test cases
+// TODO: Add more failure test cases
 
 #define MAX_TERMINATOR 16
 #define MAX_ARG_CNT    5
@@ -179,7 +179,7 @@ itoa(char *buf, size_t *size, uint64_t val, uint8_t base, fmt_info_t *info,
 {
 	const char digit[] = { '0', '1', '2', '3', '4', '5', '6', '7',
 			       '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-	char *	   pos = buf, padding_char = ' ', *tail = NULL;
+	char	     *pos = buf, padding_char = ' ', *tail = NULL;
 	size_t	   padding_cnt = 0U, content_cnt = 0U, padding_ret = 0U;
 	size_t	   padding_left_cnt = 0U, padding_right_cnt = 0U;
 	size_t	   padding_after_sign = 0U, padding_after_prefix = 0U;
@@ -408,7 +408,7 @@ stringtoa(char *buf, size_t *size, char *val_str, fmt_info_t *info)
 		goto out;
 	}
 
-	char * pos = buf, padding_char = ' ';
+	char  *pos = buf, padding_char = ' ';
 	size_t slen	   = strlen(val_str);
 	size_t padding_cnt = 0U, p = 0U;
 	size_t padding_left_cnt = 0U, padding_right_cnt = 0U;
@@ -809,7 +809,7 @@ snprint(char *str, size_t size, const char *format, register_t arg0,
 {
 	const char *fmt = format;
 	// Current buffer pointer, increasing while filling strings into
-	char *	   buf		     = str;
+	char	     *buf		     = str;
 	error_t	   ret		     = OK;
 	size_t	   remaining	     = size - 1; // space for terminating null
 	register_t args[MAX_ARG_CNT] = { arg0, arg1, arg2, arg3, arg4 };

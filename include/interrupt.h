@@ -8,10 +8,10 @@ void
 interrupt_init(void);
 
 int
-interrupt_register_isr(int irq, isr_t isr, void *data);
+interrupt_register_isr(virq_t irq, isr_t isr, void *data);
 
 int
-interrupt_deregister_isr(int irq);
+interrupt_deregister_isr(virq_t irq);
 
 void
 interrupt_dispatch(void);

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include <assert.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -10,19 +11,21 @@
 
 #include <types.h>
 
+#include <guest_types.h>
+
 #include <compiler.h>
 #include <cpulocal.h>
 #include <errno.h>
-#include <guest_types.h>
 #include <interrupt.h>
 #include <platform_timer.h>
 #include <timer.h>
+#include <util.h>
 
 #define NS_PER_S 1000000000
 
 #define TIMESPEC_MAX_NSEC (NS_PER_S - 1)
 
-extern boot_env_data_t *env_data;
+extern rt_env_data_t *env_data;
 
 static uint64_t timer_freq;
 static long	timespec_max_sec;
@@ -30,7 +33,7 @@ static long	timespec_max_sec;
 CPULOCAL_DECLARE_STATIC(bool, timer_fired);
 
 static bool
-timer_isr(int irq, void *data)
+timer_isr(virq_t irq, void *data)
 {
 	CPULOCAL(timer_fired) = true;
 	platform_timer_cancel_timeout();
@@ -45,13 +48,14 @@ void
 timer_init(void)
 {
 	timer_freq = env_data->timer_freq;
+	uint64_t u_timespec_max_sec =
+		(UINT64_MAX - (uint64_t)TIMESPEC_MAX_NSEC) / timer_freq;
+	assert(u_timespec_max_sec > 0U);
 	timespec_max_sec =
-		(long)((UINT64_MAX - TIMESPEC_MAX_NSEC) / timer_freq);
-
-	assert(timespec_max_sec > 0U);
+		(long)util_min(u_timespec_max_sec, (uint64_t)LONG_MAX);
 
 	platform_timer_init(timer_freq);
-	interrupt_register_isr(PLATFORM_TIMER_IRQ, &timer_isr, NULL);
+	(void)interrupt_register_isr(PLATFORM_TIMER_IRQ, &timer_isr, NULL);
 }
 
 static bool
@@ -65,19 +69,21 @@ timespec_valid(const struct timespec *ts)
 static uint64_t
 timespec_to_ticks(const struct timespec *ts)
 {
-	return (uint64_t)((ts->tv_sec * (long)timer_freq) +
-			  ((ts->tv_nsec * (long)timer_freq) / NS_PER_S));
+	return ((uint32_t)ts->tv_sec * timer_freq) +
+	       (((uint32_t)ts->tv_nsec * timer_freq) / (uint32_t)NS_PER_S);
 }
 
 extern void
 ticks_to_timespec(uint64_t ticks, struct timespec *ts);
+
 void
 ticks_to_timespec(uint64_t ticks, struct timespec *ts)
 {
 	assert(ts != NULL);
 
-	ts->tv_sec  = (long)(ticks / timer_freq);
-	ts->tv_nsec = (long)(((ticks % timer_freq) * NS_PER_S) / timer_freq);
+	ts->tv_sec  = (long)ticks / (long)timer_freq;
+	ts->tv_nsec = (((long)ticks % (long)timer_freq) * NS_PER_S) /
+		      (long)timer_freq;
 
 	assert(timespec_valid(ts));
 }

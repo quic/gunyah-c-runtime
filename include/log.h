@@ -50,4 +50,13 @@ log_append(const char *msg, size_t sz);
 extern void
 log_set_buffer(uintptr_t new_addr, size_t area_sz);
 
-extern struct log *log_buf;
+#define EARLY_SIZE (304)
+
+struct log_s {
+	uint32_t write_idx;
+	uint32_t size;
+
+	char buffer[EARLY_SIZE];
+};
+
+extern struct log_s *log_buf;

@@ -78,9 +78,9 @@ memcpy(void *restrict s1, const void *restrict s2, size_t n)
 {
 	assert(compiler_sizeof_object(s1) >= n);
 	assert(compiler_sizeof_object(s2) >= n);
-	if (n == 0) {
+	if (n == 0UL) {
 		// Nothing to do.
-	} else if (n < 32) {
+	} else if (n < 32UL) {
 		prefetch_store_keep(s1);
 		prefetch_load_stream(s2);
 		memcpy_below32(s1, s2, n);
@@ -88,7 +88,7 @@ memcpy(void *restrict s1, const void *restrict s2, size_t n)
 		prefetch_store_keep(s1);
 		prefetch_load_stream(s2);
 		uintptr_t a16 = (uintptr_t)s1 & (uintptr_t)15;
-		if (a16 == 0) {
+		if (a16 == 0UL) {
 			memcpy_align16(s1, s2, n);
 		} else {
 			memcpy_alignable(s1, s2, n);
@@ -131,17 +131,17 @@ memset(void *s, int c, size_t n)
 	assert(compiler_sizeof_object(s) >= n);
 	uintptr_t a16 = (uintptr_t)s & (uintptr_t)15;
 
-	if (n == 0) {
+	if (n == 0UL) {
 		// Nothing to do.
 	} else if (c == 0) {
 		uintptr_t a_zva = (uintptr_t)s &
-				  (uintptr_t)((1 << CPU_DCZVA_BITS) - 1);
-		if (n < 32) {
+				  (uintptr_t)((1UL << CPU_DCZVA_BITS) - 1UL);
+		if (n < 32UL) {
 			prefetch_store_keep(s);
 			memset_zeros_below32(s, n);
-		} else if ((a_zva == 0) && ((n >> CPU_DCZVA_BITS) > 0U)) {
+		} else if ((a_zva == 0UL) && ((n >> CPU_DCZVA_BITS) > 0UL)) {
 			memset_zeros_dczva(s, n);
-		} else if (a16 == 0) {
+		} else if (a16 == 0UL) {
 			prefetch_store_keep(s);
 			memset_zeros_align16(s, n);
 		} else {
@@ -153,10 +153,10 @@ memset(void *s, int c, size_t n)
 		cs |= cs << 8;
 		cs |= cs << 16;
 		cs |= cs << 32;
-		if (n < 32) {
+		if (n < 32UL) {
 			prefetch_store_keep(s);
 			memset_below32(s, cs, n);
-		} else if (a16 == 0) {
+		} else if (a16 == 0UL) {
 			prefetch_store_keep(s);
 			memset_align16(s, cs, n);
 		} else {
@@ -178,7 +178,7 @@ memchr(const void *s, int c, size_t n)
 
 	size_t remain = n;
 
-	while (remain > 0) {
+	while (remain > 0UL) {
 		if (*str == delim) {
 			ret = str;
 			break;
@@ -207,17 +207,17 @@ strlen(const char *str)
 ssize_t
 strscpy(char *dest, const char *str, size_t count)
 {
-	char	     *out	   = dest;
+	char	   *out	   = dest;
 	const char *pos	   = str;
 	size_t	    remain = count;
 	ssize_t	    ret;
 
-	if (count == 0) {
+	if (count == 0UL) {
 		ret = -E2BIG;
 		goto out;
 	}
 
-	while ((*pos != '\0') && (remain > 1)) {
+	while ((*pos != '\0') && (remain > 1UL)) {
 		*out = *pos;
 		out++;
 		pos++;
@@ -228,7 +228,7 @@ strscpy(char *dest, const char *str, size_t count)
 	if (*pos != '\0') {
 		ret = -E2BIG;
 	} else {
-		ret = (ssize_t)(count - remain);
+		ret = (ssize_t)count - (ssize_t)remain;
 	}
 
 out:

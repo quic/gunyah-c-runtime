@@ -5,7 +5,9 @@
 #include <asm/asm_defs.inc>
 #include <el1.inc>
 
-#define BOOT_STACK_SIZE (4096)
+#define BOOT_STACK_SIZE (1024)
+#define BOOT_STACK_CANARY 0xeb3a23d54a5267ab
+
 #define CPACR_EL1_FPEN_MASK (0x3UL << 20)
 #define CPACR_EL1_FPEN_ENABLE_EL1_SIMD (0x1UL << 20)
 #define SCTLR_EL1_ENIA_MASK (0x1U << 31)
@@ -22,8 +24,6 @@
 #define SMCCC_SERVICE_STANDARD_SECURE	4
 #define SMCCC_SERVICE_STANDARD_HYP	5
 #define SMCCC_SERVICE_VENDOR_HYP	6
-
-#define SMC_VENDOR_HYP_GET_PRNG_DATA    9
 
 #define SMCCC_FUNCTION_ID(fast, call64, service, function)	\
 	((((fast) != 0) << SMCCC_FAST_CALL_SHIFT) |		\
@@ -59,8 +59,12 @@ function _start section=nosection
 	msr	SPSel, 1
 
 	// set initial boot stack
-	adrl	x0, aarch64_boot_stack_bottom + BOOT_STACK_SIZE
-	mov	sp, x0				// sp = stack_top (align with 4KB page)
+	adrl	x0, aarch64_boot_stack_bottom
+	add	sp, x0, BOOT_STACK_SIZE
+
+	// Set a canary at the end of the stack
+	abs64	x1, BOOT_STACK_CANARY
+	stp	x1, x1, [x0]
 
 	// relocate ourself first before calling C
 	adrl	x0, _DYNAMIC
@@ -75,15 +79,18 @@ function _start section=nosection
 	tst	x0, 0xff0 // API and APA fields; both 0 means no PAC support
         b.eq    LOCAL(pac_done)
 
-.arch armv8.3-a // LLVM doesn't understand .arch_extension pauth yet
-	abs64	x0, SMCCC_FUNCTION_ID(1, 1, SMCCC_SERVICE_VENDOR_HYP, \
-		SMC_VENDOR_HYP_GET_PRNG_DATA)
-	mov	x1, 16
-	smc	0
+	mov	x0, 16	// num_bytes: 16 bytes / 128-bits
+	mov	x1, 0	// res0
+	// gunyah_hyp_prng_get_entropy(0x6057, num_bytes, res0)
+	hvc	0x6057
 	cbnz	x0, LOCAL(hang)
 
+	bfi	x1, x2, 32, 32
+	bfi	x3, x4, 32, 32
+
+.arch armv8.3-a // LLVM doesn't understand .arch_extension pauth yet
 	msr	APIAKeyLo_EL1, x1
-	msr	APIAKeyHi_EL1, x2
+	msr	APIAKeyHi_EL1, x3
 
 	mrs	x0, SCTLR_EL1
 	orr	x0, x0, SCTLR_EL1_ENIA_MASK
@@ -93,14 +100,20 @@ function _start section=nosection
 local pac_done:
 
 	// Init runtime
-	bl 	interrupt_init
-	bl	fs_init
-	bl	timer_init
+	bl	runtime_init
 
 	// elf_setup returns application entry address
 	// returned x0 is app entry. It will blr to that entry after
 	// everything is done
 	bl	elf_setup
+
+	// Check boot stack canary
+	adrl	x10, aarch64_boot_stack_bottom
+	abs64	x11, BOOT_STACK_CANARY
+	ldp	x12, x13, [x10]
+	cmp	x11, x12
+	ccmp	x11, x13, #0, eq
+	b.ne	LOCAL(boot_stack_overflow)
 
 	// setup application stack
 	// Runtime exceptions (syscalls etc) and apps (including resource manager)
@@ -119,8 +132,11 @@ local pac_done:
 	msr	DAIFSet, 0x7
 	panic_asm "Returned from app entry"
 
+local boot_stack_overflow:
+	panic_asm "Detected boot stack overflow"
 local hang:
-	wfi
+	// FIXME:
+	wfe
 	b	LOCAL(hang)
 function_end _start
 

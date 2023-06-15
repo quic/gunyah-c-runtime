@@ -13,6 +13,8 @@
 
 #include <types.h>
 
+#include <guest_types.h>
+
 #include <arch_def.h>
 #include <compiler.h>
 #include <console.h>
@@ -71,19 +73,19 @@ fs_alloc_fd(struct file *f, int o_flags)
 		goto out;
 	}
 
-	fd_alloc |= (1U << fd);
+	fd_alloc |= 1UL << fd;
 
-	long flags   = 0;
-	int  accmode = o_flags & O_ACCMODE;
-	if (accmode == O_RDONLY || accmode == O_RDWR) {
-		flags |= FS_READ;
+	uint64_t flags	 = 0U;
+	uint32_t accmode = (uint32_t)o_flags & (uint32_t)O_ACCMODE;
+	if ((accmode == (uint32_t)O_RDONLY) || (accmode == (uint32_t)O_RDWR)) {
+		flags |= (uint64_t)FS_READ;
 	}
-	if (accmode == O_WRONLY || accmode == O_RDWR) {
-		flags |= FS_WRITE;
+	if ((accmode == (uint32_t)O_WRONLY) || (accmode == (uint32_t)O_RDWR)) {
+		flags |= (uint64_t)FS_WRITE;
 	}
 
 	file_table[fd].file  = f;
-	file_table[fd].flags = flags;
+	file_table[fd].flags = (long)flags;
 	ret		     = (long)fd;
 
 out:
@@ -112,7 +114,9 @@ sys_openat(int dirfd, const char *pathname, int flags, umode_t mode)
 		goto out;
 	}
 
-	if ((flags & ~(O_ACCMODE | O_LARGEFILE)) != 0 || mode != 0) {
+	if (((uint32_t)flags &
+	     ~((uint32_t)O_ACCMODE | (uint32_t)O_LARGEFILE)) != 0U ||
+	    mode != 0U) {
 		ret = -EINVAL;
 		goto out;
 	}
@@ -142,7 +146,7 @@ sys_close(unsigned int fd)
 		goto out;
 	}
 
-	memset(fp, 0, sizeof(*fp));
+	(void)memset(fp, 0, sizeof(*fp));
 	fd_alloc &= ~((register_t)1U << fd);
 	ret = 0;
 

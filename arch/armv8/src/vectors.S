@@ -13,7 +13,6 @@
 #define ESR_ISS_SVC_IMM16_MASK (0xffff)
 
 function handle_el1h_sync
-	save_runtime_context_syscall
 	// Check if it's svc #0
 	mrs	x9, ESR_EL1
 	lsr	x10, x9, #ESR_EC_SHIFT
@@ -45,11 +44,17 @@ local el1h_invalid:
 function_end handle_el1h_sync
 
 function handle_el1h_irq
-	save_runtime_context_irq
 	bl 	interrupt_dispatch
 	restore_runtime_context_irq
 	eret
 function_end handle_el1h_irq
+
+function __stack_chk_fail
+	save_runtime_context_full
+	mov	x0, sp
+	bl	dump_trap_frame
+	panic_asm "Stack corruption detected in runtime"
+function_end __stack_chk_fail
 
 	.section .text.vectors
 	.balign 2048
@@ -90,10 +95,12 @@ vector vector_el1t_serror
 vector_end vector_el1t_serror
 
 vector vector_el1h_sync
+	save_runtime_context_syscall
 	b	handle_el1h_sync
 vector_end vector_el1h_sync
 
 vector vector_el1h_irq
+	save_runtime_context_irq
 	b	handle_el1h_irq
 vector_end vector_el1h_irq
 

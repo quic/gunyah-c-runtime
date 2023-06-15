@@ -19,7 +19,7 @@ sys_set_tid_address(int *tid_ptr);
 
 // Need to share
 asmlinkage long
-sys_ppoll(void *ufds, unsigned int nfds, const struct timespec *time,
+sys_ppoll(void *ufds, unsigned int nfds, const struct timespec *timeout,
 	  void *sigmask, uint32_t sigsetsize);
 
 asmlinkage long

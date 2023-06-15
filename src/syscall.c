@@ -9,6 +9,8 @@
 #include <sys/types.h>
 #include <time.h>
 
+#include <guest_types.h>
+
 #include <arch_def.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -20,11 +22,11 @@ asmlinkage long
 sys_set_tid_address(int *tid_ptr)
 {
 	(void)tid_ptr;
-	return 0xdeadbeefUL;
+	return 0xdeadbeefL;
 }
 
 asmlinkage long
-sys_ppoll(void *ufds, unsigned int nfds, const struct timespec *time,
+sys_ppoll(void *ufds, unsigned int nfds, const struct timespec *timeout,
 	  void *sigmask, uint32_t sigsetsize)
 {
 	long ret;
@@ -38,8 +40,8 @@ sys_ppoll(void *ufds, unsigned int nfds, const struct timespec *time,
 		goto out;
 	}
 
-	if (time != NULL) {
-		ret = timer_set_and_wait(true, time, NULL);
+	if (timeout != NULL) {
+		ret = timer_set_and_wait(true, timeout, NULL);
 	} else {
 		(void)interrupt_wait();
 		ret = -EINTR;

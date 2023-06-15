@@ -11,7 +11,8 @@
 // There is no macro to return from a full stack frame, but dump_trap_frame()
 // prints it to the console.
 .macro	save_runtime_context_full
-	// TODO: Check for stack overflow, and branch to handle_stack_fault
+	// Check for stack overflow, and branch to handle_stack_fault
+	// FIXME:
 
 	// SP (SP_EL1) points to the kernel stack
 	sub	sp, sp, TRAP_FRAME_FULL_SIZE
@@ -117,6 +118,5 @@ local panic_str\@:
 	.asciz	"\panic_str"
 .popsection
 	adr 	x0, LOCAL(panic_str\@)
-	mov	x1, sp
 	bl	panic
 .endm

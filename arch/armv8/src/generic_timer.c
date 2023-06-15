@@ -6,6 +6,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <guest_types.h>
+
 #include <interrupt.h>
 #include <platform_irq.h>
 #include <platform_timer.h>
@@ -38,7 +40,8 @@ platform_timer_init(uint64_t timer_freq)
 
 	write_cntv_ctl(CNTV_CTL_IMASK);
 
-	platform_irq_set_trigger(PLATFORM_TIMER_IRQ, IRQ_TRIGGER_LEVEL_HIGH);
+	(void)platform_irq_set_trigger(PLATFORM_TIMER_IRQ,
+				       IRQ_TRIGGER_LEVEL_HIGH);
 	platform_irq_enable(PLATFORM_TIMER_IRQ);
 }
 

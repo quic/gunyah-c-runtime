@@ -9,7 +9,7 @@ strcmp(const char *s1, const char *s2)
 {
 	const char *l = s1, *r = s2;
 
-	while (*l && (*l == *r)) {
+	while ((*l != '\0') && (*l == *r)) {
 		l++;
 		r++;
 	}

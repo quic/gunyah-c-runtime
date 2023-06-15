@@ -25,7 +25,8 @@ sys_writev(unsigned long fd, uintptr_t vec, unsigned long vlen)
 	long		    ret;
 
 	struct file_p *fp = fs_lookup_file(fd);
-	if (fp == NULL || (fp->flags & FS_WRITE) == 0) {
+	if ((fp == NULL) ||
+	    (((uint64_t)fp->flags & (uint64_t)FS_WRITE) == 0UL)) {
 		ret = -EBADF;
 		goto out;
 	}

@@ -14,11 +14,12 @@
 
 #include <types.h>
 
+#include <guest_types.h>
+
 #include <arch_def.h>
 #include <console.h>
 #include <errno.h>
 #include <fs.h>
-#include <guest_types.h>
 #include <log.h>
 #include <platform_timer.h>
 #include <string_util.h>
@@ -52,7 +53,8 @@ tty_writev(const struct iovec *vecp, unsigned long vlen)
 				struct timespec ts;
 				ticks_to_timespec(curticks, &ts);
 				char stamp[16];
-				snprint(stamp, sizeof(stamp),
+				(void)snprint(
+					stamp, sizeof(stamp),
 					"{:d}.{:06d}: ", (register_t)ts.tv_sec,
 					(register_t)ts.tv_nsec / 1000U, 0U, 0U,
 					0U);
@@ -64,12 +66,12 @@ tty_writev(const struct iovec *vecp, unsigned long vlen)
 				eol = false;
 			}
 
-			char  *next = memchr(head, '\n', remain);
+			char  *next = memchr(head, (int)'\n', remain);
 			size_t len;
 			if (next == NULL) {
 				len = remain;
 			} else {
-				len = (size_t)(next - head) + 1;
+				len = (size_t)next - (size_t)head + 1UL;
 				eol = true;
 			}
 			console_write(head, len);

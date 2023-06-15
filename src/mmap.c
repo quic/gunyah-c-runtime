@@ -40,9 +40,11 @@ sys_brk(unsigned long brk)
 	if ((new_brk >= heap_bottom) && (new_brk <= heap_bottom + heap_size)) {
 		cur_brk = new_brk;
 	} else if (brk != 0UL) {
-		// It's just query the heap top with brk == 0
+		// brk not in heap range
 		LOG(ERROR, MSG, "{:s}: invalid brk {:#x}\n",
 		    (register_t) __func__, brk);
+	} else {
+		// It's just query the heap top with brk == 0
 	}
 
 	return (long)cur_brk;

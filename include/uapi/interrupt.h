@@ -2,23 +2,23 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
-#define IRQ_MAGIC 0x49
+#define IRQ_MAGIC 0x49U
 
-#define IOCTL_ENABLE_IRQ      _IOW(IRQ_MAGIC, 0, int)
-#define IOCTL_DISABLE_IRQ     _IOW(IRQ_MAGIC, 1, int)
-#define IOCTL_REGISTER_ISR    _IOW(IRQ_MAGIC, 2, struct register_isr_req)
-#define IOCTL_SET_IRQ_TRIGGER _IOW(IRQ_MAGIC, 3, struct irq_set_trigger_req)
-#define IOCTL_DEREGISTER_ISR  _IOW(IRQ_MAGIC, 4, int)
-#define IOCTL_ASSERT_IRQ      _IOW(IRQ_MAGIC, 5, int)
-#define IOCTL_CLEAR_IRQ	      _IOW(IRQ_MAGIC, 6, int)
+#define IOCTL_ENABLE_IRQ      _IOW(IRQ_MAGIC, 0U, int)
+#define IOCTL_DISABLE_IRQ     _IOW(IRQ_MAGIC, 1U, int)
+#define IOCTL_REGISTER_ISR    _IOW(IRQ_MAGIC, 2U, struct register_isr_req)
+#define IOCTL_SET_IRQ_TRIGGER _IOW(IRQ_MAGIC, 3U, struct irq_set_trigger_req)
+#define IOCTL_DEREGISTER_ISR  _IOW(IRQ_MAGIC, 4U, int)
+#define IOCTL_ASSERT_IRQ      _IOW(IRQ_MAGIC, 5U, int)
+#define IOCTL_CLEAR_IRQ	      _IOW(IRQ_MAGIC, 6U, int)
 
-typedef bool (*isr_t)(int, void *);
+typedef bool (*isr_t)(virq_t, void *);
 
 struct register_isr_req {
-	isr_t isr;
-	int   irq;
-	int   res0;
-	void *data;
+	isr_t	isr;
+	virq_t	irq;
+	int32_t res0;
+	void   *data;
 };
 
 #define IRQ_TRIGGER_LEVEL_HIGH	 0
@@ -29,6 +29,6 @@ struct register_isr_req {
 #define IRQ_TRIGGER_MESSAGE	 5
 
 struct irq_set_trigger_req {
-	int irq;
-	int trigger;
+	virq_t	irq;
+	int32_t trigger;
 };

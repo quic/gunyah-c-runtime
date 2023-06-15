@@ -8,6 +8,8 @@
 #include <stdnoreturn.h>
 #include <sys/types.h>
 
+#include <guest_types.h>
+
 #include <asm/interrupt.h>
 
 #include <arch_def.h>
@@ -25,7 +27,8 @@ exit_loop(int ec)
 	exit_trigger(ec);
 
 	for (;;) {
-		asm_wait_for_interrupt(&ec);
+		// FIXME:
+		asm_wait_for_event(&ec);
 	}
 }
 

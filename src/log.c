@@ -8,9 +8,10 @@
 
 #include <asm-generic/vector.h>
 
+#include <guest_types.h>
+
 #include <arch_def.h>
 #include <console.h>
-#include <guest_types.h>
 #include <log.h>
 #include <panic.h>
 #include <string_util.h>

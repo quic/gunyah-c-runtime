@@ -6,32 +6,36 @@
 
 #include <elf.h>
 
-#include <arch_reloc.h>
 #include <guest_types.h>
+
 #include <reloc.h>
 
-void
-rel_fixup(Elf64_Dyn *dyni, boot_env_data_t *env_data)
+#include <arch_reloc.h>
+
+// We must disable stack protection for this function, because the compiler
+// might use a relocated absolute pointer to load the stack cookie in the
+// function prologue, which will crash because this function hasn't run yet.
+__attribute__((no_stack_protector)) void
+rel_fixup(Elf64_Dyn *dyni, rt_env_data_t *env_data)
 {
 	Elf64_Addr base = env_data->runtime_ipa;
 
-	Elf64_Addr  dyn[DT_CNT];
-	Elf64_Rel  *rel	 = NULL;
-	Elf64_Rela *rela = NULL;
-	Elf64_Word  sz	 = 0;
+	Elf64_Addr  dyn[DT_CNT] = { 0 };
+	Elf64_Rel  *rel		= NULL;
+	Elf64_Rel  *rel_end	= NULL;
+	Elf64_Rela *rela	= NULL;
+	Elf64_Rela *rela_end	= NULL;
 
-	for (int i = 0; i < DT_CNT; ++i) {
-		dyn[i] = 0;
-	}
 	for (; dyni->d_tag != DT_NULL; dyni += 1) {
 		if (dyni->d_tag < DT_CNT) {
 			dyn[dyni->d_tag] = dyni->d_un.d_ptr;
 		}
 	}
 
-	rel = (Elf64_Rel *)(dyn[DT_REL] + base);
-	sz  = (Elf64_Word)dyn[DT_RELSZ];
-	for (; sz > 0; sz -= sizeof(*rel), ++rel) {
+	rel	= (Elf64_Rel *)(dyn[DT_REL] + base);
+	rel_end = (Elf64_Rel *)(dyn[DT_REL] + base + dyn[DT_RELSZ]);
+	// Loop will not execute if the toolchain does not generate DT_REL
+	for (; rel < rel_end; rel++) {
 		if (!ARCH_CAN_PATCH(rel->r_info)) {
 			continue;
 		}
@@ -39,9 +43,10 @@ rel_fixup(Elf64_Dyn *dyni, boot_env_data_t *env_data)
 		*r += base;
 	}
 
-	rela = (Elf64_Rela *)(dyn[DT_RELA] + base);
-	sz   = (Elf64_Word)dyn[DT_RELASZ];
-	for (; sz > 0; sz -= sizeof(*rela), ++rela) {
+	rela	 = (Elf64_Rela *)(dyn[DT_RELA] + base);
+	rela_end = (Elf64_Rela *)(dyn[DT_RELA] + base + dyn[DT_RELASZ]);
+	// Loop will not execute if the toolchain does not generate DT_RELA
+	for (; rela < rela_end; rela++) {
 		if (!ARCH_CAN_PATCH(rela->r_info)) {
 			continue;
 		}

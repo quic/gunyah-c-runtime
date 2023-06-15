@@ -6,28 +6,28 @@ void
 platform_irq_init(void);
 
 void
-platform_irq_enable(int irq);
+platform_irq_enable(virq_t irq);
 
 void
-platform_irq_disable(int irq);
+platform_irq_disable(virq_t irq);
 
 void
 platform_irq_disable_all(void);
 
 bool
-platform_irq_set_trigger(int irq, int trigger);
+platform_irq_set_trigger(virq_t irq, int32_t trigger);
 
-int
+virq_t
 platform_irq_acknowledge(void);
 
 void
-platform_irq_priority_drop(int irq);
+platform_irq_priority_drop(virq_t irq);
 
 void
-platform_irq_deactivate(int irq);
+platform_irq_deactivate(virq_t irq);
 
 void
-platform_irq_assert(int irq);
+platform_irq_assert(virq_t irq);
 
 void
-platform_irq_clear(int irq);
+platform_irq_clear(virq_t irq);

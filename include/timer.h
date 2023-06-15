@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
+struct timespec;
+
 void
 timer_init(void);
 

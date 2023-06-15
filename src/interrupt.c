@@ -7,12 +7,17 @@
 #include <stdint.h>
 #include <sys/ioctl.h>
 
+#include <guest_types.h>
+
 #include <asm/interrupt.h>
 
 #include <errno.h>
 #include <fs.h>
 #include <interrupt.h>
 #include <platform_irq.h>
+
+// FIXME: should be generated into include/guest_types.h
+#define VIRQ_INVALID ~(virq_t)0U
 
 static char irq_ordering;
 
@@ -30,17 +35,17 @@ interrupt_init(void)
 }
 
 static bool
-have_isr(int irq)
+have_isr(virq_t irq)
 {
 	return isr_table[irq].isr != NULL;
 }
 
 int
-interrupt_register_isr(int irq, isr_t isr, void *data)
+interrupt_register_isr(virq_t irq, isr_t isr, void *data)
 {
 	int ret;
 
-	if ((irq < 0) || (irq >= PLATFORM_NUM_IRQS)) {
+	if (irq >= PLATFORM_NUM_IRQS) {
 		ret = -EINVAL;
 		goto out;
 	}
@@ -59,11 +64,11 @@ out:
 }
 
 int
-interrupt_deregister_isr(int irq)
+interrupt_deregister_isr(virq_t irq)
 {
 	int ret;
 
-	if ((irq < 0) || (irq >= PLATFORM_NUM_IRQS)) {
+	if (irq >= PLATFORM_NUM_IRQS) {
 		ret = -EINVAL;
 		goto out;
 	}
@@ -85,8 +90,9 @@ void
 interrupt_dispatch(void)
 {
 	while (true) {
-		int irq = platform_irq_acknowledge();
-		if (irq < 0) {
+		virq_t irq = platform_irq_acknowledge();
+
+		if (irq == VIRQ_INVALID) {
 			break;
 		}
 
@@ -107,7 +113,7 @@ interrupt_dispatch(void)
 }
 
 static long
-update_irq(int irq, bool enable)
+update_irq(virq_t irq, bool enable)
 {
 	long ret;
 
@@ -129,7 +135,7 @@ out:
 }
 
 static long
-assert_irq(int irq, bool assert)
+assert_irq(virq_t irq, bool assert)
 {
 	long ret;
 
@@ -157,16 +163,16 @@ interrupt_ioctl(unsigned int cmd, unsigned long arg)
 
 	switch (cmd) {
 	case IOCTL_ENABLE_IRQ:
-		ret = update_irq(*(int *)arg, true);
+		ret = update_irq(*(virq_t *)arg, true);
 		break;
 	case IOCTL_DISABLE_IRQ:
-		ret = update_irq(*(int *)arg, false);
+		ret = update_irq(*(virq_t *)arg, false);
 		break;
 	case IOCTL_ASSERT_IRQ:
-		ret = assert_irq(*(int *)arg, true);
+		ret = assert_irq(*(virq_t *)arg, true);
 		break;
 	case IOCTL_CLEAR_IRQ:
-		ret = assert_irq(*(int *)arg, false);
+		ret = assert_irq(*(virq_t *)arg, false);
 		break;
 	case IOCTL_REGISTER_ISR: {
 		struct register_isr_req *data = (struct register_isr_req *)arg;
@@ -174,7 +180,7 @@ interrupt_ioctl(unsigned int cmd, unsigned long arg)
 		break;
 	}
 	case IOCTL_DEREGISTER_ISR: {
-		ret = interrupt_deregister_isr(*(int *)arg);
+		ret = interrupt_deregister_isr(*(virq_t *)arg);
 		break;
 	}
 	case IOCTL_SET_IRQ_TRIGGER: {

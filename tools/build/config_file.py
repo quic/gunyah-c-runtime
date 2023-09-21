@@ -225,10 +225,14 @@ class Configuration:
                     self.graph.add_gen_source(sub_config_file)
 
     def _setup_toolchain(self):
+        llvm_root = None
         try:
-            llvm_root = self.graph.get_env('LLVM')
+            llvm_root = self.graph.get_env('QCOM_LLVM')
         except KeyError:
-            pass
+            try:
+                llvm_root = self.graph.get_env('LLVM')
+            except KeyError:
+                pass
         if not llvm_root:
             logger.error(
                 "Please set $LLVM to the root of the LLVM toolchain")

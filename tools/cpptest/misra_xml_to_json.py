@@ -17,6 +17,7 @@ import json
 import argparse
 import sys
 import os
+import re
 
 argparser = argparse.ArgumentParser(
     description="Convert Parasoft XML to Code Climate JSON")
@@ -40,11 +41,53 @@ severity_map = {
     5: "info",
 }
 
+deviation_map = {
+    # False positive due to a builtin sizeof variant that does not evaluate its
+    # argument, so there is no uninitialised use.
+    'MISRAC2012-RULE_9_1-a': [
+        (None, re.compile(r'passed to "__builtin_object_size"')),
+    ],
+    'MISRAC2012-RULE_1_3-b': [
+        (None, re.compile(r'passed to "__builtin_object_size"')),
+    ],
+    # Compliance with rule 21.25 would have a significant performance impact.
+    # All existing uses have been thoroughly analysed and tested, so we will
+    # seek a project-wide deviation for this rule.
+    'MISRAC2012-RULE_21_25-a': [
+        (None, None),
+    ],
+}
+
+
+def matches_deviation(v):
+    rule = v.attrib['rule']
+    if rule not in deviation_map:
+        return False
+
+    msg = v.attrib['msg']
+    path = v.attrib['locFile'].split(os.sep, 2)[2]
+
+    def check_constraint(constraint, value):
+        if constraint is None:
+            return True
+        try:
+            return constraint.search(value)
+        except AttributeError:
+            return constraint == value
+
+    for d_path, d_msg in deviation_map[rule]:
+        if check_constraint(d_path, path) and check_constraint(d_msg, msg):
+            return True
+
+    return False
+
+
 cc_viols = [
     ({
         "type": "issue",
         "categories": ["Bug Risk"],
-        "severity": severity_map[int(v.attrib['sev'])],
+        "severity": ('info' if matches_deviation(v)
+                     else severity_map[int(v.attrib['sev'])]),
         "check_name": v.attrib['rule'],
         "description": (v.attrib['msg'] + '. ' +
                         v.attrib['rule.header'] + '. (' +

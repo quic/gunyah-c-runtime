@@ -2,6 +2,6 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
-extern struct file *stdin_file;
-extern struct file *stdout_file;
-extern struct file *stderr_file;
+extern struct file_s *stdin_file;
+extern struct file_s *stdout_file;
+extern struct file_s *stderr_file;

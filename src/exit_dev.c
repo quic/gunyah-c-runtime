@@ -82,7 +82,7 @@ static struct fs_ops exit_ops = {
 	.ioctl = exit_ioctl,
 };
 
-static struct file exit_file = {
+static struct file_s exit_file = {
 	.ops = &exit_ops,
 };
 

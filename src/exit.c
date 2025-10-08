@@ -10,13 +10,14 @@
 
 #include <guest_types.h>
 
-#include <asm/interrupt.h>
-
 #include <arch_def.h>
+#include <compiler.h>
 #include <exit_dev.h>
 #include <log.h>
 #include <platform_irq.h>
 #include <syscall_defs.h>
+
+#include <asm/interrupt.h>
 
 static noreturn void
 exit_loop(int ec)

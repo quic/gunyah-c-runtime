@@ -5,8 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <types.h>
-
 #include <guest_types.h>
 
 #include <arch_def.h>

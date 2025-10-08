@@ -9,8 +9,6 @@
 #include <stdint.h>
 #include <time.h>
 
-#include <types.h>
-
 #include <guest_types.h>
 
 #include <compiler.h>

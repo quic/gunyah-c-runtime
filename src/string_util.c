@@ -7,8 +7,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <types.h>
-
 #include <guest_types.h>
 
 #include <arch_def.h>
@@ -174,6 +172,103 @@ padding(char *buf, size_t size, char fill_char, size_t len)
 	return ret;
 }
 
+static error_t
+itoa_insert_sign(const fmt_info_t *info, bool positive, size_t *remaining,
+		 char **pos_ptr)
+{
+	error_t ret;
+	char   *pos = *pos_ptr;
+
+	switch (info->sign) {
+	case SIGN_BOTH:
+		if (positive) {
+			*pos = '+';
+		} else {
+			*pos = '-';
+		}
+		pos++;
+		(*remaining)--;
+		break;
+
+	case SIGN_POS_LEADING:
+		if (positive) {
+			*pos = ' ';
+		} else {
+			*pos = '-';
+		}
+		pos++;
+		(*remaining)--;
+		break;
+
+	case SIGN_NEG:
+	default:
+		if (!positive) {
+			*pos = '-';
+			pos++;
+			(*remaining)--;
+		}
+		break;
+	}
+
+	ret	 = (*remaining == 0U) ? ERROR_STRING_TRUNCATED : OK;
+	*pos_ptr = pos;
+	return ret;
+}
+
+static error_t
+itoa_insert_base(uint8_t base, size_t *remaining, char **pos_ptr)
+{
+	error_t ret = OK;
+	char   *pos = *pos_ptr;
+
+	switch (base) {
+	case 2:
+		*pos = 'b';
+		pos++;
+		(*remaining)--;
+		break;
+	case 8:
+		*pos = 'o';
+		pos++;
+		(*remaining)--;
+		break;
+	case 16:
+		*pos = 'x';
+		pos++;
+		(*remaining)--;
+		break;
+	default:
+		// Nothing to add to buf
+		break;
+	}
+
+	if (*remaining == 0U) {
+		ret = ERROR_STRING_TRUNCATED;
+		goto out;
+	}
+
+	switch (base) {
+	case 2:
+	case 8:
+	case 16:
+		*pos = '0';
+		pos++;
+		(*remaining)--;
+		break;
+	default:
+		// Nothing to add to buf
+		break;
+	}
+
+	if (*remaining == 0U) {
+		ret = ERROR_STRING_TRUNCATED;
+	}
+
+out:
+	*pos_ptr = pos;
+	return ret;
+}
+
 static inline error_t
 itoa(char *buf, size_t *size, uint64_t val, uint8_t base, fmt_info_t *info,
      bool positive)
@@ -187,7 +282,12 @@ itoa(char *buf, size_t *size, uint64_t val, uint8_t base, fmt_info_t *info,
 	size_t	   remaining = *size;
 	error_t	   ret	     = OK;
 
-	assert(base <= 16);
+	assert(base <= 16U);
+
+	if (remaining == 0U) {
+		ret = ERROR_STRING_TRUNCATED;
+		goto out;
+	}
 
 	do {
 		index_t i = (index_t)(val % base);
@@ -230,30 +330,37 @@ itoa(char *buf, size_t *size, uint64_t val, uint8_t base, fmt_info_t *info,
 		padding_char = info->fill_char;
 	}
 
-	if (info->alignment == ALIGN_AFTER_SIGN) {
+	switch (info->alignment) {
+	case ALIGN_AFTER_SIGN:
 		padding_after_prefix = 0U;
 		padding_after_sign   = padding_cnt;
 		padding_left_cnt     = 0U;
 		padding_right_cnt    = 0U;
-	} else if (info->alignment == ALIGN_LEFT) {
+		break;
+	case ALIGN_LEFT:
 		// align content to left, add padding to right
 		padding_after_prefix = 0U;
 		padding_after_sign   = 0U;
 		padding_left_cnt     = 0U;
 		padding_right_cnt    = padding_cnt;
-	} else if (info->alignment == ALIGN_RIGHT) {
+		break;
+	case ALIGN_RIGHT:
 		// align content to right, add padding to left
 		padding_after_prefix = 0U;
 		padding_after_sign   = 0U;
 		padding_left_cnt     = padding_cnt;
 		padding_right_cnt    = 0U;
-	} else if (info->alignment == ALIGN_CENTER) {
+		break;
+	case ALIGN_CENTER:
 		padding_after_prefix = 0U;
 		padding_after_sign   = 0U;
 		padding_left_cnt     = padding_cnt / 2UL;
 		padding_right_cnt    = padding_cnt - padding_left_cnt;
-	} else {
-		// Invalid alignment, default values used
+		break;
+	case ALIGN_DEFAULT:
+	default:
+		// Default or invalid alignment, default values used
+		break;
 	}
 
 	padding_ret =
@@ -266,47 +373,8 @@ itoa(char *buf, size_t *size, uint64_t val, uint8_t base, fmt_info_t *info,
 	}
 
 	if (info->alternate_form) {
-		switch (base) {
-		case 2:
-			*pos = 'b';
-			pos++;
-			remaining--;
-			break;
-		case 8:
-			*pos = 'o';
-			pos++;
-			remaining--;
-			break;
-		case 16:
-			*pos = 'x';
-			pos++;
-			remaining--;
-			break;
-		default:
-			// Nothing to add to buf
-			break;
-		}
-
-		if (remaining == 0U) {
-			ret = ERROR_STRING_TRUNCATED;
-			goto reverse_out;
-		}
-
-		switch (base) {
-		case 2:
-		case 8:
-		case 16:
-			*pos = '0';
-			pos++;
-			remaining--;
-			break;
-		default:
-			// Nothing to add to buf
-			break;
-		}
-
-		if (remaining == 0U) {
-			ret = ERROR_STRING_TRUNCATED;
+		ret = itoa_insert_base(base, &remaining, &pos);
+		if (ret != OK) {
 			goto reverse_out;
 		}
 	}
@@ -319,47 +387,9 @@ itoa(char *buf, size_t *size, uint64_t val, uint8_t base, fmt_info_t *info,
 		goto reverse_out;
 	}
 
-	switch (info->sign) {
-	case SIGN_BOTH:
-		if (positive) {
-			*pos = '+';
-		} else {
-			*pos = '-';
-		}
-		pos++;
-		remaining--;
-		if (remaining == 0U) {
-			ret = ERROR_STRING_TRUNCATED;
-			goto reverse_out;
-		}
-		break;
-
-	case SIGN_POS_LEADING:
-		if (positive) {
-			*pos = ' ';
-		} else {
-			*pos = '-';
-		}
-		pos++;
-		remaining--;
-		if (remaining == 0U) {
-			ret = ERROR_STRING_TRUNCATED;
-			goto reverse_out;
-		}
-		break;
-
-	case SIGN_NEG:
-	default:
-		if (!positive) {
-			*pos = '-';
-			remaining--;
-			if (remaining == 0U) {
-				ret = ERROR_STRING_TRUNCATED;
-				goto reverse_out;
-			}
-			pos++;
-		}
-		break;
+	ret = itoa_insert_sign(info, positive, &remaining, &pos);
+	if (ret != OK) {
+		goto reverse_out;
 	}
 
 	padding_ret = padding(pos, remaining, padding_char, padding_left_cnt);
@@ -384,6 +414,7 @@ reverse_out:
 
 	*size = remaining;
 
+out:
 	return ret;
 }
 
@@ -455,8 +486,7 @@ stringtoa(char *buf, size_t *size, char *val_str, fmt_info_t *info)
 		goto out;
 	}
 
-	p = util_min(slen, remaining);
-	(void)memcpy(pos, val_str, p);
+	p = memscpy(pos, remaining, val_str, slen);
 	remaining -= p;
 	pos += p;
 	if (remaining == 0U) {
@@ -835,8 +865,7 @@ snprint(char *str, size_t size, const char *format, register_t arg0,
 	bool	   end		     = false;
 
 	while (remaining != 0U) {
-		fmt_info_t info = { 0 };
-		size_t	   s;
+		fmt_info_t info		= { 0 };
 		size_t	   consumed_len = 0U;
 		size_t	   literal_len	= 0U;
 
@@ -849,11 +878,7 @@ snprint(char *str, size_t size, const char *format, register_t arg0,
 		}
 
 		// Copy literal characters to output buffer
-		s = util_min(literal_len, remaining);
-
-		if (s > 0UL) {
-			(void)memcpy(buf, fmt, s);
-		}
+		(void)memscpy(buf, remaining, fmt, literal_len);
 
 		// Not enough for the output
 		if (literal_len > remaining) {

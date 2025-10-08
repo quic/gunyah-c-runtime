@@ -12,8 +12,6 @@
 #include <sys/uio.h>
 #include <time.h>
 
-#include <types.h>
-
 #include <guest_types.h>
 
 #include <arch_def.h>
@@ -25,6 +23,9 @@
 #include <string_util.h>
 #include <syscall_defs.h>
 #include <tty.h>
+#ifdef HYPVM_WITH_COVERAGE
+#include "cpptest.h"
+#endif
 
 #define TIMESTAMPS 1
 
@@ -113,6 +114,17 @@ tty_ioctl(unsigned int cmd, unsigned long arg)
 		ret = 0L;
 		break;
 	}
+#ifdef HYPVM_WITH_COVERAGE
+	case TIOCGETCOV: { // Non-standard IOCTL!!
+		struct tty_cov_buffer_req *req =
+			(struct tty_cov_buffer_req *)arg;
+		entry_buffer_loc((char *)req->buffer, req->size);
+		CppTest_SendCoverage_buffer();
+		req->size = return_size();
+		ret	  = 0L;
+		break;
+	}
+#endif
 
 	default:
 		LOG(ERROR, MSG, "{:s}: invalid tty ioctl cmd{:#x}\n",
@@ -134,14 +146,14 @@ static struct fs_ops ttyout_ops = {
 	.writev = &tty_writev,
 };
 
-static struct file ttyin = {
+static struct file_s ttyin = {
 	.ops = &ttyin_ops,
 };
 
-static struct file ttyout = {
+static struct file_s ttyout = {
 	.ops = &ttyout_ops,
 };
 
-struct file *stdin_file	 = &ttyin;
-struct file *stdout_file = &ttyout;
-struct file *stderr_file = &ttyout;
+struct file_s *stdin_file  = &ttyin;
+struct file_s *stdout_file = &ttyout;
+struct file_s *stderr_file = &ttyout;

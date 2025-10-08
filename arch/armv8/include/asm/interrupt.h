@@ -12,7 +12,7 @@ asm_wait_for_interrupt(char *asm_ordering)
 	uint64_t rpr;
 	__asm__("isb; mrs %[r], ICC_RPR_EL1"
 		: "+m"(*asm_ordering), [r] "=r"(rpr));
-	if (__builtin_expect((rpr != 0xffU), 0)) {
+	if (compiler_unexpected(rpr != 0xffU)) {
 		volatile static count_t rpr_non_idle_count = 0U;
 		// We have a stray active priority. Log and clear it.
 		rpr_non_idle_count++;

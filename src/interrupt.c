@@ -9,15 +9,13 @@
 
 #include <guest_types.h>
 
-#include <asm/interrupt.h>
-
+#include <compiler.h>
 #include <errno.h>
 #include <fs.h>
 #include <interrupt.h>
 #include <platform_irq.h>
 
-// FIXME: should be generated into include/guest_types.h
-#define VIRQ_INVALID ~(virq_t)0U
+#include <asm/interrupt.h>
 
 static char irq_ordering;
 
@@ -203,7 +201,7 @@ static struct fs_ops irq_ops = {
 	.ioctl = interrupt_ioctl,
 };
 
-static struct file irq_file = {
+static struct file_s irq_file = {
 	.ops = &irq_ops,
 };
 

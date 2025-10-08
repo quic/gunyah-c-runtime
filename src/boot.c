@@ -10,6 +10,9 @@
 #include <guest_interface.h>
 #include <interrupt.h>
 #include <timer.h>
+#ifdef HYPVM_WITH_COVERAGE
+#include "cpptest.h"
+#endif
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wreserved-identifier"
@@ -38,6 +41,9 @@ runtime_init(void)
 	__stack_chk_guard = (uintptr_t)guard;
 
 	// Initialise the rest of the runtime.
+#ifdef HYPVM_WITH_COVERAGE
+	CppTest_InitializeRuntime();
+#endif
 	interrupt_init();
 	fs_init();
 	timer_init();

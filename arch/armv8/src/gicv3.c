@@ -6,8 +6,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <types.h>
-
 #include <guest_types.h>
 
 #include <atomic.h>
@@ -22,9 +20,6 @@
 
 // Set to 0 to use GICD_I[SC]PENDR writes; 1 to use SETSPI / CLRSPI
 #define PLATFORM_IRQ_USE_MSI 0
-
-// FIXME: should be generated into include/guest_types.h
-#define VIRQ_INVALID ~(virq_t)0U
 
 extern rt_env_data_t *env_data;
 
@@ -413,14 +408,14 @@ platform_irq_set_trigger(virq_t irq, int trigger)
 			platform_irq_disable(irq);
 		}
 
-		uint32_t icfgr = device_load_relaxed(&gicd->icfgr[irq / 16]);
+		uint32_t icfgr = device_load_relaxed(&gicd->icfgr[irq / 16U]);
 		uint32_t index = (((uint32_t)irq % 16U) * 2U) + 1U;
 		if (edge) {
 			icfgr |= (uint32_t)1U << index;
 		} else {
 			icfgr &= ~(1U << index);
 		}
-		device_store_relaxed(&gicd->icfgr[irq / 16], icfgr);
+		device_store_relaxed(&gicd->icfgr[irq / 16U], icfgr);
 
 		if (enabled) {
 			platform_irq_enable(irq);
@@ -458,7 +453,7 @@ platform_irq_priority_drop(virq_t irq)
 void
 platform_irq_deactivate(virq_t irq)
 {
-	assert((irq >= 0) && (irq < GIC_SPI_END));
+	assert((irq >= 0U) && (irq < GIC_SPI_END));
 
 	// An ISR may have unmasked IRQs, ensure they are masked
 	__asm__ volatile("msr DAIFSet, 0x7" : "+m"(gic_ordering));

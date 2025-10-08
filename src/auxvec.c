@@ -7,13 +7,10 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <types.h>
-
-#include <elf.h>
-
 #include <guest_types.h>
 
 #include <arch_def.h>
+#include <elf.h>
 #include <guest_interface.h>
 #include <util.h>
 

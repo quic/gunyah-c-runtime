@@ -2,15 +2,15 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
-#define _IOC(a, b, c, d) (((a) << 30) | ((b) << 8) | (c) | ((d) << 16))
-#define _IOC_NONE	 0U
-#define _IOC_WRITE	 1U
-#define _IOC_READ	 2U
+#define IOC(a, b, c, d) (((a) << 30) | ((b) << 8) | (c) | ((d) << 16))
+#define IOC_NONE	0U
+#define IOC_WRITE	1U
+#define IOC_READ	2U
 
-#define _IO(a, b)      _IOC(_IOC_NONE, (a), (b), 0)
-#define _IOW(a, b, c)  _IOC(_IOC_WRITE, (a), (b), sizeof(c))
-#define _IOR(a, b, c)  _IOC(_IOC_READ, (a), (b), sizeof(c))
-#define _IOWR(a, b, c) _IOC(_IOC_READ | _IOC_WRITE, (a), (b), sizeof(c))
+#define IO(a, b)      IOC(IOC_NONE, (a), (b), 0)
+#define IOW(a, b, c)  IOC(IOC_WRITE, (a), (b), sizeof(c))
+#define IOR(a, b, c)  IOC(IOC_READ, (a), (b), sizeof(c))
+#define IOWR(a, b, c) IOC(IOC_READ | IOC_WRITE, (a), (b), sizeof(c))
 
 #define TIOCGWINSZ 0x5413
 #define TIOCSETBUF 0x547f // Non-standard IOCTL!!
@@ -27,3 +27,11 @@ struct tty_set_buffer_req {
 	uintptr_t buffer;
 	size_t	  size;
 };
+#ifdef HYPVM_WITH_COVERAGE
+#define TIOCGETCOV 0x548f // Non-standard IOCTL!!
+
+struct tty_cov_buffer_req {
+	uintptr_t buffer;
+	uint32_t  size;
+};
+#endif

@@ -7,6 +7,6 @@
 #define R_AARCH64_RELATIVE 1027
 
 #define ARCH_CAN_PATCH(r_info)                                                 \
-	(((R_TYPE(r_info) == R_AARCH64_NONE) ||                                \
-	  (R_TYPE(r_info) == R_AARCH64_RELATIVE)) &&                           \
-	 (R_SYM(r_info) == 0))
+	(((R_TYPE(r_info) == (uint32_t)R_AARCH64_NONE) ||                      \
+	  (R_TYPE(r_info) == (uint32_t)R_AARCH64_RELATIVE)) &&                 \
+	 (R_SYM(r_info) == 0U))

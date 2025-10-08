@@ -12,13 +12,13 @@ struct fs_ops {
 	fs_ioctl_t  ioctl;
 };
 
-struct file {
+struct file_s {
 	struct fs_ops *ops;
 };
 
 struct file_p {
-	struct file *file;
-	long	     flags;
+	struct file_s *file;
+	long	       flags;
 };
 
 #define FS_READ	 0x1
@@ -28,7 +28,7 @@ void
 fs_init(void);
 
 long
-fs_alloc_fd(struct file *f, int o_flags);
+fs_alloc_fd(struct file_s *f, int o_flags);
 
 struct file_p *
 fs_lookup_file(unsigned long fd);

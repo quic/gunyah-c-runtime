@@ -31,6 +31,9 @@ _Static_assert(__STDC_HOSTED__ == 0,
 #define __NEED_ssize_t
 #include <bits/alltypes.h>
 
+extern size_t
+memscpy(void *s1, size_t s1_size, const void *s2, size_t s2_size);
+
 extern void *
 memcpy(void *restrict s1, const void *restrict s2, size_t n);
 

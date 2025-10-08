@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "arch_def.h"
-
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wstrict-prototypes"
 typedef register_t (*const sys_call_ptr_t)(register_t arg0, register_t arg1,

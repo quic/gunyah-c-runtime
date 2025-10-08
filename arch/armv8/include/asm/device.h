@@ -31,7 +31,7 @@
 	_Atomic uint32_t *: device_store32_relaxed, \
 	_Atomic int32_t *: device_store32_relaxed, \
 	_Atomic uint64_t *: device_store64_relaxed, \
-	_Atomic int64_t *: device_store64_relaxed)(p, v)
+	_Atomic int64_t *: device_store64_relaxed)((p), (v))
 // clang-format off
 
 static inline __attribute__((always_inline)) uint8_t

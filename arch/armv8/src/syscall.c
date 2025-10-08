@@ -7,9 +7,12 @@
 #include <sys/types.h>
 #include <time.h>
 
-#include <asm/unistd.h>
+#include <guest_types.h>
 
+#include <arch_def.h>
 #include <syscall_defs.h>
+
+#include <asm/unistd.h>
 
 #include "arch_syscall.h"
 

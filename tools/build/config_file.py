@@ -12,6 +12,7 @@ This script helps to parse configuration file.
 import logging
 import sys
 import os
+import re
 from io import open
 
 logger = logging.getLogger(__name__)
@@ -100,13 +101,16 @@ class Configuration:
     sub directories by order of configuration file.
     """
 
-    def __init__(self, file_name, graph):
+    def __init__(self, file_name, graph, quality=None):
         self.file_name = file_name
         self.graph = graph
         self.target_triple = None
         self.arch = None
         self.board = None
         self.linker_script = None
+        if quality is None:
+            raise Exception('Please specify quality=<name>')
+        self.quality = quality
         # the name of current configuration target
         self.binary_name = None
         # collect all object for current configuration target
@@ -115,6 +119,13 @@ class Configuration:
         self.local_env = {}
         self.compdb_file_name = "compile_commands.json"
         self.child_configs = []
+        self._root_dir = os.path.dirname(self.file_name)
+        self._config_dir = os.path.join(self._root_dir, 'config')
+        self._quality_dir = os.path.join(self._config_dir, 'quality')
+
+        # cc_wrapper which prepends to cc
+        self.cc_wrapper = []
+        self.shvars_re = re.compile(r'\$((\w+)\b|{(\w+)})')
 
     def process(self):
         """
@@ -125,11 +136,30 @@ class Configuration:
         self.graph.add_gen_source(config_file)
 
         self.set_default_rule()
+        quality_config = os.path.join(self._quality_dir, self.quality +
+                                      '.conf')
+        self._parse_config(quality_config)
         self._parse_config(config_file)
         self._setup_toolchain()
 
     def _relpath(self, path):
         return os.path.relpath(path, start=self.graph.root_dir)
+
+    def _add_external_obj(self, external_objects):
+        self.objects.add(external_objects)
+
+    def var_subst(self, w):
+        def shrepl(match):
+            name = match.group(2) or match.group(3)
+            try:
+                return self.graph.get_env(name)
+            except KeyError:
+                logger.error("Undefined environment variable: $%s", name)
+                sys.exit(1)
+        n = 1
+        while n:
+            w, n = self.shvars_re.subn(shrepl, w)
+        return w
 
     def _parse_config(self, config_file):
         cur_dir = os.path.dirname(config_file)
@@ -173,6 +203,10 @@ class Configuration:
                         self._add_include(d, self.local_env)
                 elif words[0] == "local_flags":
                     self._add_flags(words[1:], self.local_env)
+                elif words[0] == "cc_wrapper":
+                    self.cc_wrapper.clear()
+                    self.cc_wrapper.append(
+                        list(map(self.var_subst, words[1:]))[0])
                 elif words[0] == "configs":
                     for w in words[1:]:
                         self._add_global_define(w)
@@ -215,7 +249,8 @@ class Configuration:
                 elif words[0] == "cflags":
                     self.graph.append_env("CFLAGS", ' '.join(words[1:]))
                 elif words[0] == "cppflags":
-                    self.graph.append_env("CPPFLAGS", ' '.join(words[1:]))
+                    self.graph.append_env("CPPFLAGS", ' '.join(
+                        list(map(self.var_subst, words[1:]))))
                 elif words[0] == "ldflags":
                     self.graph.append_env("LDFLAGS", ' '.join(words[1:]))
                 elif words[0] == "sub_directory":
@@ -223,6 +258,11 @@ class Configuration:
                                                    self.file_name)
                     self._parse_config(sub_config_file)
                     self.graph.add_gen_source(sub_config_file)
+                elif words[0] == 'external_object':
+                    for w in map(self.var_subst, words[1:]):
+                        self._add_external_obj(w)
+                else:
+                    logger.error("Unknown config directive: %s", words[0])
 
     def _setup_toolchain(self):
         llvm_root = None
@@ -261,7 +301,13 @@ class Configuration:
                 'clang-format'))
 
         # Use Clang to compile.
-        self.graph.add_env('TARGET_CC', '${CLANG} -target ${TARGET_TRIPLE}')
+        if self.cc_wrapper:
+            self.graph.add_env('TARGET_CC', ' '.join(self.cc_wrapper))
+            self.graph.append_env(
+                'TARGET_CC', '${CLANG} -target ${TARGET_TRIPLE}')
+        else:
+            self.graph.add_env(
+                'TARGET_CC', '${CLANG} -target ${TARGET_TRIPLE}')
         self.graph.add_env('TEST_CC', '${CLANG} -target ${TARGET_TRIPLE}')
         self.graph.add_env('TARGET_AR',
                            os.path.join(llvm_root, 'bin', 'llvm-ar'))

@@ -19,25 +19,26 @@
 #define LOG_FUNC(...)                                                          \
 	LOG_FUNC_I(__VA_ARGS__, 6, 5, 4, 3, 2, 1, 0, _unspecified_id)
 
-#define LOG_ADD0(level, action, ...) log_msg(level, action, 0, 0, 0, 0, 0, 0)
+#define LOG_ADD0(level, action, ...)                                           \
+	log_msg((level), (action), 0, 0, 0, 0, 0, 0)
 
 #define LOG_ADD1(level, a1, action, ...)                                       \
-	log_msg(level, a1, action, 0, 0, 0, 0, 0)
+	log_msg((level), (a1), (action), 0, 0, 0, 0, 0)
 
 #define LOG_ADD2(level, action, a1, a2, ...)                                   \
-	log_msg(level, action, a1, a2, 0, 0, 0, 0)
+	log_msg((level), (action), (a1), (a2), 0, 0, 0, 0)
 
 #define LOG_ADD3(level, action, a1, a2, a3, ...)                               \
-	log_msg(level, action, a1, a2, a3, 0, 0, 0)
+	log_msg((level), (action), (a1), (a2), (a3), 0, 0, 0)
 
 #define LOG_ADD4(level, action, a1, a2, a3, a4, ...)                           \
-	log_msg(level, action, a1, a2, a3, a4, 0, 0)
+	log_msg((level), (action), (a1), (a2), (a3), (a4), 0, 0)
 
 #define LOG_ADD5(level, action, a1, a2, a3, a4, a5, ...)                       \
-	log_msg(level, action, a1, a2, a3, a4, a5, 0)
+	log_msg((level), (action), (a1), (a2), (a3), (a4), (a5), 0)
 
 #define LOG_ADD6(level, action, a1, a2, a3, a4, a5, a6, ...)                   \
-	log_msg(level, action, a1, a2, a3, a4, a5, a6)
+	log_msg((level), (action), (a1), (a2), (a3), (a4), (a5), (a6))
 
 #define LOG(level, action, ...) LOG_FUNC(level, action, __VA_ARGS__)
 

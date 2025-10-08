@@ -28,7 +28,7 @@ assert_if_const(_Bool x)
 #define assert(x) (void)assert_if_const(x)
 #else
 _Noreturn void
-assert_failed(const char *file, int line, const char *func, const char *err);
+assert_failed(const char *pfile, int line, const char *func, const char *err);
 #define assert(x)                                                              \
 	(assert_if_const(x) ? (void)0                                          \
 			    : assert_failed(__FILE__, __LINE__, __func__, #x))

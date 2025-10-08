@@ -4,13 +4,12 @@
 
 #include <stddef.h>
 
-#include <elf.h>
-
 #include <guest_types.h>
 
-#include <reloc.h>
-
 #include <arch_reloc.h>
+#include <elf.h>
+
+#include <reloc.h>
 
 // We must disable stack protection for this function, because the compiler
 // might use a relocated absolute pointer to load the stack cookie in the

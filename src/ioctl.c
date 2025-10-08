@@ -9,6 +9,8 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 
+#include <guest_types.h>
+
 #include <arch_def.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -27,7 +29,7 @@ sys_ioctl(unsigned int fd, unsigned int cmd, unsigned long arg)
 		goto out;
 	}
 
-	struct file *f = fp->file;
+	struct file_s *f = fp->file;
 	assert(f != NULL);
 	if (f->ops->ioctl == NULL) {
 		ret = -EINVAL;

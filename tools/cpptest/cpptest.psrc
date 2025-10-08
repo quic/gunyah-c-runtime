@@ -1,0 +1,4 @@
+cpptestcc.ignore musl-c-runtime/src/reloc.c
+cpptestcc.ignore musl-c-runtime/src/boot.c
+cpptestcc.ignore musl-c-runtime/arch/armv8/src/string.c
+cpptestcc.ignore musl-c-runtime/src/guest_interface.c

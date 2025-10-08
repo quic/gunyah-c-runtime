@@ -11,8 +11,6 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include <types.h>
-
 #include <guest_types.h>
 
 #include <arch_def.h>
@@ -30,7 +28,7 @@
 #define NUM_FDS 32U
 
 static register_t fd_alloc;
-static_assert(sizeof(register_t) * CHAR_BIT >= NUM_FDS,
+static_assert(sizeof(register_t) * (uint8_t)CHAR_BIT >= NUM_FDS,
 	      "Too many FDs for allocator");
 
 static struct file_p file_table[NUM_FDS];
@@ -55,7 +53,7 @@ fs_init(void)
 }
 
 long
-fs_alloc_fd(struct file *f, int o_flags)
+fs_alloc_fd(struct file_s *f, int o_flags)
 {
 	long	      ret;
 	unsigned long fd;

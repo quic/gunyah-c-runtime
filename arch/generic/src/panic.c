@@ -9,13 +9,15 @@
 
 #include <asm-generic/vector.h>
 
-#include <asm/event.h>
+#include <guest_types.h>
 
 #include <arch_def.h>
 #include <attributes.h>
 #include <log.h>
 #include <panic.h>
 #include <syscall_defs.h>
+
+#include <asm/event.h>
 
 void
 dump_trap_frame(trap_frame_t *frame)

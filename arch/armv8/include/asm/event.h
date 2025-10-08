@@ -2,4 +2,4 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
-#define asm_event_wait(p) __asm__ volatile("wfe" ::"m"(*p))
+#define asm_event_wait(p) __asm__ volatile("wfe" ::"m"(*(p)))

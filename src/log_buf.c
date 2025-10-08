@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <types.h>
+#include <guest_types.h>
 
 #include <arch_def.h>
 #include <console.h>
@@ -24,8 +24,8 @@ void
 log_set_buffer(uintptr_t new_addr, size_t area_sz)
 {
 	assert(new_addr != 0U);
-	assert(area_sz > (sizeof(size_t) * 2));
-	assert(area_sz <= 524288);
+	assert(area_sz > (sizeof(size_t) * 2U));
+	assert(area_sz <= 524288U);
 
 	log_buf		   = (struct log_s *)new_addr;
 	log_buf->write_idx = 0U;
@@ -37,32 +37,35 @@ log_set_buffer(uintptr_t new_addr, size_t area_sz)
 void
 log_append(const char *msg, size_t sz)
 {
+	uint32_t    checked_sz;
+	const char *msg_buf = msg;
 	assert(log_buf != NULL);
+	assert(log_buf->size != 0U);
 
-	if (sz >= log_buf->size) {
+	if ((sz >= log_buf->size) && (log_buf->size != 0U)) {
 		// truncate the log message
-		msg = msg + sz - (log_buf->size - 1U);
-		sz  = log_buf->size - 1UL;
-	}
-	if (log_buf->write_idx + sz < log_buf->size) {
-		(void)memcpy(log_buf->buffer + log_buf->write_idx, msg, sz);
-		log_buf->write_idx += (uint32_t)sz;
+		msg_buf	   = msg_buf + (sz - ((size_t)log_buf->size - 1U));
+		checked_sz = log_buf->size - (uint32_t)1;
 	} else {
-		size_t first_len, second_len;
-
-		first_len =
-			(size_t)(log_buf->size) - (size_t)log_buf->write_idx;
-		second_len = sz - first_len;
-		(void)memcpy(log_buf->buffer + log_buf->write_idx, msg,
-			     first_len);
-
-		if (second_len > 0U) {
-			(void)memcpy(log_buf->buffer, msg + first_len,
-				     second_len);
-		}
-
-		log_buf->write_idx = (uint32_t)second_len;
+		checked_sz = (uint32_t)sz;
 	}
+
+	size_t first_len =
+		memscpy(log_buf->buffer + log_buf->write_idx,
+			(size_t)(log_buf->size - (size_t)log_buf->write_idx),
+			msg_buf, (size_t)checked_sz);
+	size_t second_len = (size_t)checked_sz - first_len;
+
+	if (second_len > 0U) {
+		(void)memscpy(log_buf->buffer, log_buf->size,
+			      msg_buf + first_len, second_len);
+	}
+
+	log_buf->write_idx += checked_sz;
+	if (log_buf->write_idx >= log_buf->size) {
+		log_buf->write_idx -= log_buf->size;
+	}
+
 	// Ensure log is always NULL terminated.
 	log_buf->buffer[log_buf->write_idx] = '\0';
 }

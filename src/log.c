@@ -19,7 +19,7 @@
 #define SINGLE_LOG_MSG_SIZE (256)
 
 noreturn void
-assert_failed(const char *file, int line, const char *func, const char *err);
+assert_failed(const char *pfile, int line, const char *func, const char *err);
 
 void
 log_msg(uint64_t level, uint64_t action, const char *a1, size_t a2,
@@ -40,11 +40,11 @@ log_msg(uint64_t level, uint64_t action, const char *a1, size_t a2,
 
 #if !defined(NDEBUG)
 noreturn void
-assert_failed(const char *file, int line, const char *func, const char *err)
+assert_failed(const char *pfile, int line, const char *func, const char *err)
 {
 	LOG(ERROR, PANIC, "assertion: {:s} in func({:s}) file({:s}:{:d})\n",
 	    (register_t)(uintptr_t)err, (register_t)(uintptr_t)func,
-	    (register_t)(uintptr_t)file, (register_t)line);
+	    (register_t)(uintptr_t)pfile, (register_t)line);
 
 	panic("Failure for assertion\n");
 }

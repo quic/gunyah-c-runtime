@@ -11,7 +11,9 @@
 #include <console.h>
 #include <errno.h>
 #include <fs.h>
-
+#ifdef HYPVM_WITH_COVERAGE
+#include "cpptest.h"
+#endif
 static char    prefix[16];
 static ssize_t prefix_len = 0;
 
@@ -92,6 +94,12 @@ console_ioctl(unsigned int cmd, unsigned long arg)
 		}
 		break;
 	}
+#ifdef HYPVM_WITH_COVERAGE
+	case IOCTL_SEND_COVERAGE_CONSOLE: {
+		CppTest_SendCoverage_fdx();
+		ret = 0;
+	}
+#endif
 	default:
 		ret = -ENOSYS;
 		break;
@@ -104,7 +112,7 @@ static struct fs_ops console_ops = {
 	.ioctl = console_ioctl,
 };
 
-static struct file console_file = {
+static struct file_s console_file = {
 	.ops = &console_ops,
 };
 

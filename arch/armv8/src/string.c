@@ -6,11 +6,12 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <asm/cpu.h>
-#include <asm/prefetch.h>
-
 #include <compiler.h>
 #include <errno.h>
+#include <util.h>
+
+#include <asm/cpu.h>
+#include <asm/prefetch.h>
 
 // Assembly functions. All of these come in at least three variants:
 //
@@ -72,6 +73,16 @@ memset_below32(void *s, uint64_t cs, size_t n);
 
 void
 memset_align16(void *s, uint64_t cs, size_t n);
+
+size_t
+memscpy(void *s1, size_t s1_size, const void *s2, size_t s2_size)
+{
+	size_t copy_size = util_min(s1_size, s2_size);
+	if (copy_size != (size_t)0) {
+		(void)memcpy(s1, s2, copy_size);
+	}
+	return copy_size;
+}
 
 void *
 memcpy(void *restrict s1, const void *restrict s2, size_t n)

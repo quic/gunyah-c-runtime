@@ -8,6 +8,8 @@
 #include <stdnoreturn.h>
 #include <sys/types.h>
 
+#include <guest_types.h>
+
 #include <arch_def.h>
 #include <errno.h>
 #include <log.h>

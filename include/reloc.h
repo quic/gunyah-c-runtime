@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
-#define R_TYPE(r_info) ((r_info)&0x7fffffff)
+#define R_TYPE(r_info) ((r_info)&0x7fffffffU)
 #define R_SYM(r_info)  ((r_info) >> 32)
 
 // only record DT type up to DT_RELSZ == 18

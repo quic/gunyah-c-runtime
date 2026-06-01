@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -38,10 +38,10 @@ have_isr(virq_t irq)
 	return isr_table[irq].isr != NULL;
 }
 
-int
+int32_t
 interrupt_register_isr(virq_t irq, isr_t isr, void *data)
 {
-	int ret;
+	int32_t ret;
 
 	if (irq >= PLATFORM_NUM_IRQS) {
 		ret = -EINVAL;
@@ -61,10 +61,10 @@ out:
 	return ret;
 }
 
-int
+int32_t
 interrupt_deregister_isr(virq_t irq)
 {
-	int ret;
+	int32_t ret;
 
 	if (irq >= PLATFORM_NUM_IRQS) {
 		ret = -EINVAL;
@@ -110,10 +110,10 @@ interrupt_dispatch(void)
 	}
 }
 
-static long
+static int32_t
 update_irq(virq_t irq, bool enable)
 {
-	long ret;
+	int32_t ret;
 
 	if (!have_isr(irq)) {
 		ret = -ENOENT;
@@ -132,10 +132,10 @@ out:
 	return ret;
 }
 
-static long
+static int32_t
 assert_irq(virq_t irq, bool assert)
 {
-	long ret;
+	int32_t ret;
 
 	if (!have_isr(irq)) {
 		ret = -ENOENT;
@@ -154,10 +154,10 @@ out:
 	return ret;
 }
 
-static long
-interrupt_ioctl(unsigned int cmd, unsigned long arg)
+static int32_t
+interrupt_ioctl(uint32_t cmd, uintptr_t arg)
 {
-	long ret;
+	int32_t ret;
 
 	switch (cmd) {
 	case IOCTL_ENABLE_IRQ:
@@ -205,8 +205,8 @@ static struct file_s irq_file = {
 	.ops = &irq_ops,
 };
 
-long
-interrupt_open(int flags)
+int32_t
+interrupt_open(uint32_t flags)
 {
 	return fs_alloc_fd(&irq_file, flags);
 }

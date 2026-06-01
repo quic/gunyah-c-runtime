@@ -845,5 +845,5 @@ if __name__ == '__main__':
     build = NinjaBuild(root_dir, arguments=dict(a.split('=', 1)
                                                 for a in sys.argv[1:]))
 
-    import pipes
-    build(gen_cmd=' '.join((pipes.quote(arg) for arg in sys.argv)))
+    import shlex
+    build(gen_cmd=' '.join((shlex.quote(arg) for arg in sys.argv)))

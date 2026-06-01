@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -33,10 +33,10 @@ console_write(const char *msg, size_t sz)
 	}
 }
 
-int
+int32_t
 console_register(console_t new_console)
 {
-	int ret;
+	int32_t ret;
 
 	if (console != NULL) {
 		ret = -EBUSY;
@@ -50,10 +50,10 @@ out:
 	return ret;
 }
 
-int
+int32_t
 console_deregister(void)
 {
-	int ret;
+	int32_t ret;
 
 	if (console == NULL) {
 		ret = -ENOENT;
@@ -67,10 +67,10 @@ out:
 	return ret;
 }
 
-static long
-console_ioctl(unsigned int cmd, unsigned long arg)
+static int32_t
+console_ioctl(uint32_t cmd, uintptr_t arg)
 {
-	long ret;
+	int32_t ret;
 
 	switch (cmd) {
 	case IOCTL_REGISTER_CONSOLE: {
@@ -87,7 +87,7 @@ console_ioctl(unsigned int cmd, unsigned long arg)
 		const char *uprefix = (char *)arg;
 		prefix_len	    = strscpy(prefix, uprefix, 16);
 		if (prefix_len < 0) {
-			ret	   = prefix_len;
+			ret	   = (int32_t)prefix_len;
 			prefix_len = 0;
 		} else {
 			ret = 0;
@@ -116,8 +116,8 @@ static struct file_s console_file = {
 	.ops = &console_ops,
 };
 
-long
-console_open(int flags)
+int32_t
+console_open(uint32_t flags)
 {
 	return fs_alloc_fd(&console_file, flags);
 }

@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -7,28 +7,37 @@
 // These all have simple definitions - no compiler builtins or other language
 // extensions. Look in compiler.h for those.
 
+#define util_width(x) (sizeof(x) * 8U)
+
 #define util_bit(b)  ((uintmax_t)1U << (b))
-#define util_sbit(b) ((intmax_t)1 << (b))
-#define util_mask(n) (util_bit(n) - 1)
+#define util_mask(n) (util_bit(n) - 1U)
+
+// Safe variants of above bitwise operations when shift value may be greater
+// than or equal to the register size.
+#define util_bit_safe(b)                                                       \
+	(((b) < util_width(uintmax_t)) ? util_bit(b) : (uintmax_t)0U)
+#define util_mask_safe(n)                                                      \
+	(((n) < util_width(uintmax_t)) ? util_mask(n) : ~(uintmax_t)0U)
 
 #define util_max(x, y) (((x) > (y)) ? (x) : (y))
 #define util_min(x, y) (((x) < (y)) ? (x) : (y))
 
 // Arithmetic predicates with intent that is not obvious when open-coded
-#define util_is_p2_or_zero(x)	 (((x) & ((x)-1U)) == 0U)
-#define util_is_p2(x)		 (((x) != 0U) && util_is_p2_or_zero(x))
-#define util_is_baligned(x, a)	 (assert(util_is_p2(a)), (((x) & ((a)-1U)) == 0U))
+#define util_is_p2_or_zero(x) (((x) & ((x) - 1U)) == 0U)
+#define util_is_p2(x)	      (((x) != 0U) && util_is_p2_or_zero(x))
+#define util_is_baligned(x, a)                                                 \
+	(assert(util_is_p2(a)), (((x) & ((a) - 1U)) == 0U))
 #define util_is_p2aligned(x, b)	 (((x) & ~(util_bit(b) - 1)) == 0U)
 #define util_add_overflows(a, b) ((a) > ~(b))
 
 // Align up or down to bytes (which must be a power of two)
 #if defined(__TYPED_DSL__)
-#define util_balign_down(x, a) ((x) & ~((a)-1U))
+#define util_balign_down(x, a) ((x) & ~((a) - 1U))
 #else
 #define util_balign_down(x, a)                                                 \
-	(assert(util_is_p2(a)), (x) & ~((__typeof__(x))(a)-1U))
+	(assert(util_is_p2(a)), (x) & ~((__typeof__(x))(a) - 1U))
 #endif
-#define util_balign_up(x, a) util_balign_down((x) + ((a)-1U), a)
+#define util_balign_up(x, a) util_balign_down((x) + ((a) - 1U), a)
 
 // Align up or down to a power-of-two size (in bits)
 #define util_p2align_down(x, b)                                                \

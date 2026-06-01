@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -26,7 +26,7 @@
 extern rt_env_data_t *env_data;
 
 static uint64_t timer_freq;
-static long	timespec_max_sec;
+static int64_t	timespec_max_sec;
 
 CPULOCAL_DECLARE_STATIC(bool, timer_fired);
 
@@ -50,7 +50,7 @@ timer_init(void)
 		(UINT64_MAX - (uint64_t)TIMESPEC_MAX_NSEC) / timer_freq;
 	assert(u_timespec_max_sec > 0U);
 	timespec_max_sec =
-		(long)util_min(u_timespec_max_sec, (uint64_t)LONG_MAX);
+		(int64_t)util_min(u_timespec_max_sec, (uint64_t)INT64_MAX);
 
 	platform_timer_init(timer_freq);
 	(void)interrupt_register_isr(PLATFORM_TIMER_IRQ, &timer_isr, NULL);
@@ -67,8 +67,10 @@ timespec_valid(const struct timespec *ts)
 static uint64_t
 timespec_to_ticks(const struct timespec *ts)
 {
-	return ((uint32_t)ts->tv_sec * timer_freq) +
-	       (((uint32_t)ts->tv_nsec * timer_freq) / (uint32_t)NS_PER_S);
+	assert(timespec_valid(ts));
+
+	return ((uint64_t)ts->tv_sec * timer_freq) +
+	       (((uint64_t)ts->tv_nsec * timer_freq) / (uint64_t)NS_PER_S);
 }
 
 extern void
@@ -79,18 +81,18 @@ ticks_to_timespec(uint64_t ticks, struct timespec *ts)
 {
 	assert(ts != NULL);
 
-	ts->tv_sec  = (long)ticks / (long)timer_freq;
-	ts->tv_nsec = (((long)ticks % (long)timer_freq) * NS_PER_S) /
-		      (long)timer_freq;
+	ts->tv_sec  = ((int64_t)ticks / (int64_t)timer_freq);
+	ts->tv_nsec = (((int64_t)ticks % (int64_t)timer_freq) * NS_PER_S) /
+		      (int64_t)timer_freq;
 
 	assert(timespec_valid(ts));
 }
 
-long
+int32_t
 timer_set_and_wait(bool relative, const struct timespec *req,
 		   struct timespec *remain)
 {
-	long ret;
+	int32_t ret;
 
 	if (compiler_unexpected(!timespec_valid(req))) {
 		ret = -EINVAL;

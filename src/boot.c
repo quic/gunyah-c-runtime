@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -16,8 +16,8 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wreserved-identifier"
-extern uintptr_t	 __stack_chk_guard;
-uintptr_t __stack_chk_guard __attribute__((used, visibility("hidden")));
+extern uintptr_t __stack_chk_guard;
+uintptr_t	 __stack_chk_guard __attribute__((used, visibility("hidden")));
 #pragma clang diagnostic pop
 
 void

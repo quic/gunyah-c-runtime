@@ -1,11 +1,10 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include <asm/asm_defs.inc>
 #include <el1.inc>
 #include <errno.h>
-#include <syscall_defs.h>
 
 #define ESR_EC_SHIFT (26)
 #define ESR_EC_SVC64 (0b010101)
@@ -21,19 +20,12 @@ function handle_el1h_sync
 	ccmp	x11, #0, #0, eq
 	// FIXME: might need a proper handling for this case
 	b.ne	LOCAL(el1h_invalid)
-	// check syscall table
-	cmp	x8, NR_syscall_max
-	b.hi	LOCAL(svc_not_implemented)
-	adrl	x11, aarch64_sys_call_table
-	ldr	x12, [x11, x8, lsl #3]
-	cbz	x12, LOCAL(svc_not_implemented)
-	blr	x12
-local svc_return:
+	// Syscalls on aarch64 only use up to 6 arguments, so
+	// it's safe to move the syscall number from x8 to x6.
+	mov	x6, x8
+	bl	aarch64_do_syscall
 	restore_runtime_context_syscall
 	eret
-local svc_not_implemented:
-	mov	x0, #-ENOSYS
-	b	LOCAL(svc_return)
 local el1h_invalid:
 	restore_runtime_context_syscall
 

@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -18,10 +18,10 @@
 #include <log.h>
 #include <syscall_defs.h>
 
-asmlinkage long
-sys_ioctl(unsigned int fd, unsigned int cmd, unsigned long arg)
+int32_t
+sys_ioctl(uint32_t fd, uint32_t cmd, uintptr_t arg)
 {
-	long ret;
+	int32_t ret;
 
 	struct file_p *fp = fs_lookup_file(fd);
 	if (fp == NULL) {

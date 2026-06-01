@@ -1,6 +1,6 @@
 # coding: utf-8
 #
-# © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+# Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -16,6 +16,9 @@ import re
 from io import open
 
 logger = logging.getLogger(__name__)
+
+true_strings = ('true', 't', '1', 'yes', 'y')
+false_strings = ('false', 'f', '0', 'no', 'n')
 
 
 class Configuration:
@@ -115,6 +118,7 @@ class Configuration:
         self.binary_name = None
         # collect all object for current configuration target
         self.objects = set()
+        self.objects_ast_json = set()
         # env should be set before set any source
         self.local_env = {}
         self.compdb_file_name = "compile_commands.json"
@@ -126,6 +130,10 @@ class Configuration:
         # cc_wrapper which prepends to cc
         self.cc_wrapper = []
         self.shvars_re = re.compile(r'\$((\w+)\b|{(\w+)})')
+
+        # check for whether need to generate unreachable functions list
+        self.gen_callgraph = self.graph.get_argument(
+            "callgraph", 'false').lower() in true_strings
 
     def process(self):
         """
@@ -227,6 +235,9 @@ class Configuration:
                 elif words[0] == "program":
                     assert self.binary_name is None
                     self.binary_name = words[1]
+                    self.map_file = os.path.join(
+                        os.getcwd(), self.graph.build_dir,
+                        self.binary_name+".map")
                     # FIXME: the add_variant API is not work as expected, need
                     # double check if this program is helpful
                     #
@@ -241,6 +252,8 @@ class Configuration:
                     # just need to implement a stack
                     assert self.binary_name is not None
                     self._set_program()
+                    if self.gen_callgraph:
+                        self._gen_callgraph()
                 elif words[0] == "static_lib":
                     self.binary_name = "lib" + words[0] + ".a"
                 elif words[0] == "end_static_lib":
@@ -312,6 +325,14 @@ class Configuration:
         self.graph.add_env('TARGET_AR',
                            os.path.join(llvm_root, 'bin', 'llvm-ar'))
 
+        self.unreach_func_gen_script = os.path.join(
+            'tools', 'cpptest', 'get_unreachable_functions.py')
+        self.graph.add_env('GEN_UNREACHABLE_FUNCTIONS',
+                           self._relpath(self.unreach_func_gen_script))
+
+        # LDFLAGS to create crt map file
+        self.graph.append_env("LDFLAGS", '-Wl,-Map,' + self.map_file)
+
         # Use Clang with LLD to link.
         self.graph.add_env('TARGET_LD', '${TARGET_CC} -fuse-ld=lld')
         self.graph.add_env('TEST_LD', '${TEST_CC} -fuse-ld=lld')
@@ -327,6 +348,12 @@ class Configuration:
     def _add_source_file(self, src, obj, requires, local_env):
         self.graph.add_target([obj], 'cc', [src], requires=requires,
                               **local_env)
+        if self.gen_callgraph and src.endswith(".c"):
+            ast_json = obj + '.ast.json.gz'
+            self.graph.add_target([ast_json], 'cc_ast_json', [src],
+                                  requires=requires, depends=[obj],
+                                  **local_env)
+            self.objects_ast_json.add(ast_json)
 
     def _add_source(self, file_dir, src, requires, local_env):
         """
@@ -377,8 +404,16 @@ class Configuration:
             deps = [self.linker_script]
         assert len(self.objects) != 0
         self.graph.add_target([bin_file], 'ld', sorted(self.objects),
-                              depends=deps)
+                              depends=deps, byproducts=self.map_file)
         self.graph.add_default_target(bin_file)
+
+    def _gen_callgraph(self):
+        exclusion_symbol_file = os.path.join(
+            self.graph.build_dir, 'excludeSymbols.psrc')
+        self.graph.add_target([exclusion_symbol_file], 'gen_unreachable_psrc',
+                              sorted(self.objects_ast_json), MAP=self.map_file,
+                              depends=[self.map_file])
+        self.graph.add_default_target(exclusion_symbol_file)
 
     def _set_static_lib(self):
         bin_file = os.path.join(self.graph.build_dir, self.binary_name)
@@ -398,6 +433,19 @@ class Configuration:
                             '$TARGET_CPPFLAGS $LOCAL_CFLAGS $LOCAL_CPPFLAGS '
                             ' -MD -MF ${out}.d -c -o ${out} ${in}',
                             depfile='${out}.d', compdbs=[compdb_file])
+        # Generate a JSON format AST dump for each source file. The dumps are
+        # very large so we gzip them.
+        self.graph.add_rule('cc_ast_json',
+                            '$TARGET_CC $CFLAGS $CPPFLAGS $TARGET_CFLAGS '
+                            '$TARGET_CPPFLAGS $LOCAL_CFLAGS $LOCAL_CPPFLAGS '
+                            ' -fsyntax-only -Xclang -ast-dump=json ${in} '
+                            '| gzip -9 > ${out}')
+        # Generate callgraph from AST dumps and then use it to find out a list
+        # of unreachable functions. Output is generated in the format expected
+        # by Parasoft tools.
+        self.graph.add_rule('gen_unreachable_psrc',
+                            'python $GEN_UNREACHABLE_FUNCTIONS ${in} -m $MAP '
+                            '-o ${out}')
         # Preprocess a DSL file.
         self.graph.add_rule('cpp-dsl', '${CPP} $CPPFLAGS $TARGET_CPPFLAGS '
                             '$LOCAL_CPPFLAGS -undef $DSL_DEFINES -x c '

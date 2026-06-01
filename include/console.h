@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -6,7 +6,7 @@
 
 #define IOCTL_REGISTER_CONSOLE                                                 \
 	IOW(CONSOLE_MAGIC, 0U, struct register_console_req)
-#define IOCTL_DEREGISTER_CONSOLE IOW(CONSOLE_MAGIC, 1U, int)
+#define IOCTL_DEREGISTER_CONSOLE IOW(CONSOLE_MAGIC, 1U, int32_t)
 #define IOCTL_SET_PREFIX_CONSOLE IOW(CONSOLE_MAGIC, 2U, const char *)
 #ifdef HYPVM_WITH_COVERAGE
 #define IOCTL_SEND_COVERAGE_CONSOLE IOW(CONSOLE_MAGIC, 3U, const char *)
@@ -21,11 +21,11 @@ struct register_console_req {
 void
 console_write(const char *msg, size_t sz);
 
-int
+int32_t
 console_register(console_t new_console);
 
-int
+int32_t
 console_deregister(void);
 
-long
-console_open(int flags);
+int32_t
+console_open(uint32_t flags);

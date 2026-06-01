@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -10,29 +10,27 @@
 // This is not necessary for acquire / release accesses because there are no
 // writeback forms of those in AArch64.
 
-// clang-format off
-#define device_load_relaxed(p) _Generic( \
-	(p), \
-	_Atomic int8_t *: device_load8_relaxed, \
-	_Atomic uint8_t *: device_load8_relaxed, \
-	_Atomic uint16_t *: device_load16_relaxed, \
-	_Atomic int16_t *: device_load16_relaxed, \
-	_Atomic uint32_t *: device_load32_relaxed, \
-	_Atomic int32_t *: device_load32_relaxed, \
-	_Atomic uint64_t *: device_load64_relaxed, \
-	_Atomic int64_t *: device_load64_relaxed)(p)
+#define device_load_relaxed(p)                                                 \
+	_Generic((p),                                                          \
+		_Atomic int8_t *: device_load8_relaxed,                        \
+		_Atomic uint8_t *: device_load8_relaxed,                       \
+		_Atomic uint16_t *: device_load16_relaxed,                     \
+		_Atomic int16_t *: device_load16_relaxed,                      \
+		_Atomic uint32_t *: device_load32_relaxed,                     \
+		_Atomic int32_t *: device_load32_relaxed,                      \
+		_Atomic uint64_t *: device_load64_relaxed,                     \
+		_Atomic int64_t *: device_load64_relaxed)(p)
 
-#define device_store_relaxed(p, v) _Generic( \
-	(p), \
-	_Atomic int8_t *: device_store8_relaxed, \
-	_Atomic uint8_t *: device_store8_relaxed, \
-	_Atomic uint16_t *: device_store16_relaxed, \
-	_Atomic int16_t *: device_store16_relaxed, \
-	_Atomic uint32_t *: device_store32_relaxed, \
-	_Atomic int32_t *: device_store32_relaxed, \
-	_Atomic uint64_t *: device_store64_relaxed, \
-	_Atomic int64_t *: device_store64_relaxed)((p), (v))
-// clang-format off
+#define device_store_relaxed(p, v)                                             \
+	_Generic((p),                                                          \
+		_Atomic int8_t *: device_store8_relaxed,                       \
+		_Atomic uint8_t *: device_store8_relaxed,                      \
+		_Atomic uint16_t *: device_store16_relaxed,                    \
+		_Atomic int16_t *: device_store16_relaxed,                     \
+		_Atomic uint32_t *: device_store32_relaxed,                    \
+		_Atomic int32_t *: device_store32_relaxed,                     \
+		_Atomic uint64_t *: device_store64_relaxed,                    \
+		_Atomic int64_t *: device_store64_relaxed)((p), (v))
 
 static inline __attribute__((always_inline)) uint8_t
 device_load8_relaxed(_Atomic uint8_t *p)

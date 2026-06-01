@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -13,17 +13,17 @@
 static exit_t exit_func;
 
 void
-exit_trigger(int exit_code)
+exit_trigger(int32_t exit_code)
 {
 	if (exit_func != NULL) {
 		exit_func(exit_code);
 	}
 }
 
-int
+int32_t
 exit_register(exit_t new_exit_func)
 {
-	int ret;
+	int32_t ret;
 
 	if (exit_func != NULL) {
 		ret = -EBUSY;
@@ -39,10 +39,10 @@ exit_register(exit_t new_exit_func)
 	return ret;
 }
 
-int
+int32_t
 exit_deregister(void)
 {
-	int ret;
+	int32_t ret;
 
 	if (exit_func == NULL) {
 		ret = -ENOENT;
@@ -54,10 +54,10 @@ exit_deregister(void)
 	return ret;
 }
 
-static long
-exit_ioctl(unsigned int cmd, unsigned long arg)
+static int32_t
+exit_ioctl(uint32_t cmd, uintptr_t arg)
 {
-	long ret;
+	int32_t ret;
 
 	switch (cmd) {
 	case IOCTL_REGISTER_EXIT: {
@@ -86,8 +86,8 @@ static struct file_s exit_file = {
 	.ops = &exit_ops,
 };
 
-long
-exit_open(int flags)
+int32_t
+exit_open(uint32_t flags)
 {
 	return fs_alloc_fd(&exit_file, flags);
 }

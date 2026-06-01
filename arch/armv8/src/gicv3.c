@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -27,14 +27,14 @@ struct gicd_s {
 	uint32_t _Atomic ctlr;
 	uint32_t _Atomic typer;
 	uint32_t _Atomic iidr;
-	uint8_t		 pad_to_statusr_[4];
+	uint8_t pad_to_statusr_[4];
 	uint32_t _Atomic statusr;
-	uint8_t		 pad_to_setspi_nsr_[44];
+	uint8_t pad_to_setspi_nsr_[44];
 	uint32_t _Atomic setspi_nsr;
-	uint8_t		 pad_to_clrspi_nsr_[4];
+	uint8_t pad_to_clrspi_nsr_[4];
 	uint32_t _Atomic clrspi_nsr;
 	// ignore {set,clr}spi_sr which are WI when DS=1
-	uint8_t		 pad_to_igroupr_[52];
+	uint8_t pad_to_igroupr_[52];
 	uint32_t _Atomic igroupr[32];
 	uint32_t _Atomic isenabler[32];
 	uint32_t _Atomic icenabler[32];
@@ -42,14 +42,14 @@ struct gicd_s {
 	uint32_t _Atomic icpendr[32];
 	uint32_t _Atomic isactiver[32];
 	uint32_t _Atomic icactiver[32];
-	uint8_t _Atomic	 ipriorityr[1020];
+	uint8_t _Atomic ipriorityr[1020];
 	// Ignore itargetsr
-	uint8_t		 pad_to_icfgr_[1028];
+	uint8_t pad_to_icfgr_[1028];
 	uint32_t _Atomic icfgr[64];
 	uint32_t _Atomic igrpmodr[32];
 	// Ignore nascr, sgir,
 	// {c,s}pendsgir, extended regs
-	uint8_t		 pad_to_irouter_[21376];
+	uint8_t pad_to_irouter_[21376];
 	uint64_t _Atomic irouter[988];
 	// Ignore extended irouter
 	uint8_t pad_to_end_[32800];
@@ -68,24 +68,24 @@ struct gicr_s {
 	uint8_t pad_to_igroupr0_[128];
 	// Extended regs are ignored
 	uint32_t _Atomic igroupr0;
-	uint8_t		 pad_to_isenabler0_[124];
+	uint8_t pad_to_isenabler0_[124];
 	uint32_t _Atomic isenabler0;
-	uint8_t		 pad_to_icenabler0_[124];
+	uint8_t pad_to_icenabler0_[124];
 	uint32_t _Atomic icenabler0;
-	uint8_t		 pad_to_ispendr0_[124];
+	uint8_t pad_to_ispendr0_[124];
 	uint32_t _Atomic ispendr0;
-	uint8_t		 pad_to_icpendr0_[124];
+	uint8_t pad_to_icpendr0_[124];
 	uint32_t _Atomic icpendr0;
-	uint8_t		 pad_to_isactiver0_[124];
+	uint8_t pad_to_isactiver0_[124];
 	uint32_t _Atomic isactiver0;
-	uint8_t		 pad_to_icactiver0_[124];
+	uint8_t pad_to_icactiver0_[124];
 	uint32_t _Atomic icactiver0;
-	uint8_t		 pad_to_ipriorityr_[124];
-	uint8_t _Atomic	 ipriorityr[32];
-	uint8_t		 pad_to_icfgr0_[2016];
+	uint8_t pad_to_ipriorityr_[124];
+	uint8_t _Atomic ipriorityr[32];
+	uint8_t pad_to_icfgr0_[2016];
 	uint32_t _Atomic icfgr0;
 	uint32_t _Atomic icfgr1;
-	uint8_t		 pad_to_igrpmodr0_[248];
+	uint8_t pad_to_igrpmodr0_[248];
 	uint32_t _Atomic igrpmodr0;
 	// Ignore nsacr
 	uint8_t pad_to_vlpi_base_[62204];
@@ -110,7 +110,7 @@ static_assert(GIC_SPI_END >= PLATFORM_NUM_IRQS, "Bad num irqs");
 
 #define GIC_PRIORITY_DEFAULT 0xA0U
 
-#define GICD_CTLR_RWP	     (1U << 31)
+#define GICD_CTLR_RWP	     ((uint32_t)1U << 31)
 #define GICD_CTLR_ARE	     (1U << 4)
 #define GICD_CTLR_ENABLEGRP1 (1U << 1)
 
@@ -349,7 +349,7 @@ platform_irq_disable_all(void)
 }
 
 bool
-platform_irq_set_trigger(virq_t irq, int trigger)
+platform_irq_set_trigger(virq_t irq, int32_t trigger)
 {
 	bool edge, valid;
 

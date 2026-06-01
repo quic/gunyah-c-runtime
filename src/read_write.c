@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -18,15 +18,14 @@
 #include <syscall_defs.h>
 #include <unistd.h>
 
-asmlinkage long
-sys_writev(unsigned long fd, uintptr_t vec, unsigned long vlen)
+ssize_t
+sys_writev(uint32_t fd, uintptr_t vec, size_t vlen)
 {
 	const struct iovec *vecp = (const struct iovec *)vec;
-	long		    ret;
+	int64_t		    ret;
 
 	struct file_p *fp = fs_lookup_file(fd);
-	if ((fp == NULL) ||
-	    (((uint64_t)fp->flags & (uint64_t)FS_WRITE) == 0UL)) {
+	if ((fp == NULL) || ((fp->flags & FS_WRITE) == 0UL)) {
 		ret = -EBADF;
 		goto out;
 	}

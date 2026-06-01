@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -20,7 +20,7 @@
 #include <asm/interrupt.h>
 
 static noreturn void
-exit_loop(int ec)
+exit_loop(int32_t ec)
 {
 	LOG(ERROR, PANIC, "sys_exit/sys_exit_group: called\n");
 
@@ -33,14 +33,14 @@ exit_loop(int ec)
 	}
 }
 
-asmlinkage noreturn void
-sys_exit(int ec)
+noreturn void
+sys_exit(int32_t ec)
 {
 	exit_loop(ec);
 }
 
-asmlinkage noreturn void
-sys_exit_group(int ec)
+noreturn void
+sys_exit_group(int32_t ec)
 {
 	exit_loop(ec);
 }

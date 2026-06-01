@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -32,8 +32,8 @@
 extern void
 ticks_to_timespec(uint64_t ticks, struct timespec *ts);
 
-static long
-tty_writev(const struct iovec *vecp, unsigned long vlen)
+static ssize_t
+tty_writev(const struct iovec *vecp, size_t vlen)
 {
 	index_t i;
 	size_t	ret_len = 0;
@@ -85,13 +85,13 @@ tty_writev(const struct iovec *vecp, unsigned long vlen)
 		ret_len += v->iov_len;
 	}
 
-	return (long)ret_len;
+	return (ssize_t)ret_len;
 }
 
-static long
-tty_ioctl(unsigned int cmd, unsigned long arg)
+static int32_t
+tty_ioctl(uint32_t cmd, uintptr_t arg)
 {
-	long ret;
+	int32_t ret;
 
 	switch (cmd) {
 	case TIOCGWINSZ: {
@@ -103,7 +103,7 @@ tty_ioctl(unsigned int cmd, unsigned long arg)
 		w->ws_xpixel	  = 1280;
 		w->ws_ypixel	  = 760;
 
-		ret = 0L;
+		ret = 0;
 		break;
 	}
 	case TIOCSETBUF: { // Non-standard IOCTL!!
@@ -111,7 +111,7 @@ tty_ioctl(unsigned int cmd, unsigned long arg)
 			(struct tty_set_buffer_req *)arg;
 		log_set_buffer(req->buffer, req->size);
 
-		ret = 0L;
+		ret = 0;
 		break;
 	}
 #ifdef HYPVM_WITH_COVERAGE
@@ -121,14 +121,14 @@ tty_ioctl(unsigned int cmd, unsigned long arg)
 		entry_buffer_loc((char *)req->buffer, req->size);
 		CppTest_SendCoverage_buffer();
 		req->size = return_size();
-		ret	  = 0L;
+		ret	  = 0;
 		break;
 	}
 #endif
 
 	default:
 		LOG(ERROR, MSG, "{:s}: invalid tty ioctl cmd{:#x}\n",
-		    (register_t) __func__, cmd);
+		    (register_t) __func__, (register_t)cmd);
 
 		ret = -EINVAL;
 		break;

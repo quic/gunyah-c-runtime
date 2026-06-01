@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -35,16 +35,6 @@ static uint32_t aux_entropy[4];
 uintptr_t
 elf_setup(void);
 
-// initial auxiliary vector table
-static uintptr_t
-setup_auxvector(uint64_t **stack, uint64_t app_addr);
-
-static void
-setup_envs(uint64_t **stack, int envc, char **envp);
-
-static void
-setup_arguments(uint64_t **stack, int argc, char **arg_values);
-
 static bool
 get_aux_entropy(void)
 {
@@ -79,7 +69,6 @@ fill_auxv_entry(uint64_t *stack, uint64_t key, uint64_t value)
 	return p;
 }
 
-// FIXME: should we use asmlinkage for stack only
 static uintptr_t
 setup_auxvector(uint64_t **stack, uintptr_t app_addr)
 {
@@ -107,10 +96,10 @@ setup_auxvector(uint64_t **stack, uintptr_t app_addr)
 }
 
 static void
-setup_envs(uint64_t **stack, int envc, char **envp)
+setup_envs(uint64_t **stack, int32_t envc, char **envp)
 {
 	uint64_t *p   = *stack;
-	int	  idx = 0;
+	int32_t	  idx = 0;
 
 	assert(envc >= 0);
 
@@ -127,10 +116,10 @@ setup_envs(uint64_t **stack, int envc, char **envp)
 }
 
 static void
-setup_arguments(uint64_t **stack, int argc, char **arg_values)
+setup_arguments(uint64_t **stack, int32_t argc, char **arg_values)
 {
 	uint64_t *p   = *stack;
-	int	  idx = 0;
+	int32_t	  idx = 0;
 
 	assert(argc >= 0);
 
@@ -165,9 +154,9 @@ elf_setup(void)
 	app_memory += STACK_SIZE;
 	app_memory_size -= STACK_SIZE;
 
-	// calculate application stack and heap
-	uintptr_t app_heap = app_memory;
-	init_heap(app_heap, app_memory_size);
+	// Add initial heap memory
+	int32_t heap_ret = mmap_add_heap(app_memory, app_memory_size, true);
+	assert(heap_ret == 0);
 
 	// parse dtb to get commandline, arg count, env count, envs
 	device_tree_info_t device_tree_info;
@@ -201,9 +190,10 @@ elf_setup(void)
 	uintptr_t app_entry;
 	app_entry = setup_auxvector(&stack, app_address);
 
-	setup_envs(&stack, (int)device_tree_info.envc, device_tree_info.envp);
+	setup_envs(&stack, (int32_t)device_tree_info.envc,
+		   device_tree_info.envp);
 
-	setup_arguments(&stack, (int)device_tree_info.argc,
+	setup_arguments(&stack, (int32_t)device_tree_info.argc,
 			device_tree_info.argv);
 
 	// check stack is aligned to 16-bytes

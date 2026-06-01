@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -18,18 +18,20 @@
 #include <syscall_defs.h>
 #include <timer.h>
 
-asmlinkage long
-sys_set_tid_address(int *tid_ptr)
+#define APP_TID 1234
+
+int32_t
+sys_set_tid_address(int32_t *tid_ptr)
 {
 	(void)tid_ptr;
-	return 0xdeadbeefL;
+	return APP_TID;
 }
 
-asmlinkage long
-sys_ppoll(void *ufds, unsigned int nfds, const struct timespec *timeout,
-	  void *sigmask, uint32_t sigsetsize)
+int32_t
+sys_ppoll(uintptr_t ufds, uint32_t nfds, const struct timespec *timeout,
+	  uintptr_t sigmask, size_t sigsetsize)
 {
-	long ret;
+	int32_t ret;
 
 	(void)ufds;
 	(void)sigmask;
@@ -51,11 +53,11 @@ out:
 	return ret;
 }
 
-asmlinkage long
-sys_clock_nanosleep(long clock_id, int flags, const struct timespec *request,
-		    struct timespec *remain)
+int32_t
+sys_clock_nanosleep(int32_t clock_id, int32_t flags,
+		    const struct timespec *request, struct timespec *remain)
 {
-	long ret;
+	int32_t ret;
 
 	if (clock_id != CLOCK_MONOTONIC) {
 		// FIXME: Also accept CLOCK_REALTIME?
@@ -75,11 +77,18 @@ out:
 	return ret;
 }
 
-asmlinkage int
-sys_tkill(int tid, int sig)
+int32_t
+sys_tkill(int32_t tid, int32_t sig)
 {
-	(void)tid;
+	int32_t ret;
+
 	(void)sig;
 
-	sys_exit(1);
+	if (tid == APP_TID) {
+		sys_exit(1);
+	} else {
+		ret = -EINVAL;
+	}
+
+	return ret;
 }

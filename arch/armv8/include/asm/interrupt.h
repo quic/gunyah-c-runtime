@@ -1,4 +1,4 @@
-// © 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+// Copyright © Qualcomm Technologies, Inc. and/or its subsidiaries.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
@@ -24,11 +24,7 @@ asm_wait_for_interrupt(char *asm_ordering)
 	__asm__ volatile("dsb ish; wfi; isb" : "+m"(*asm_ordering));
 }
 
-static inline __attribute__((always_inline)) void
-asm_wait_for_event(int *asm_ordering)
-{
-	__asm__ volatile("dsb ish; wfe; isb" : "+m"(*asm_ordering));
-}
+#define asm_wait_for_event(p) __asm__ volatile("wfe" ::"m"(*(p)))
 
 static inline __attribute__((always_inline)) bool
 asm_interrupt_pending(char *asm_ordering)
